@@ -29,7 +29,11 @@ import androidx.compose.ui.unit.sp
 import com.dastanapps.poweroff.service.TVHelperService
 import com.dastanapps.poweroff.ui.theme.AndroidTVAppsTheme
 
-
+/**
+ *
+ * Created by Iqbal Ahmed on 19/02/2023 3:56 PM
+ *
+ */
 data class HelperState(
     val runningState: MutableState<Boolean> = mutableStateOf(false),
     val openService: () -> Unit
