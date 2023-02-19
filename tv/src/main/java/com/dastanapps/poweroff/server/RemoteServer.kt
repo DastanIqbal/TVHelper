@@ -1,6 +1,7 @@
 package com.dastanapps.poweroff.server
 
 import com.dastanapps.poweroff.utils.NetworkUtils.getSystemIP
+import org.json.JSONObject
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 import java.nio.channels.SelectionKey
@@ -22,14 +23,20 @@ fun main(args: Array<String>) {
 class RemoteServer {
 
     private var isRunning = false
+    private var thread: Thread? = null
+
+    var mouseCursor: ((x: Double, y: Double) -> Unit)? = null
+    var tapOn: ((x: Double, y: Double) -> Unit)? = null
 
     fun start() {
         isRunning = true
         server()
+        thread?.start()
     }
 
     fun stop() {
         isRunning = false
+        thread?.interrupt()
     }
 
     private fun server() {
@@ -44,26 +51,31 @@ class RemoteServer {
         val selector = Selector.open()
         serverSocket.register(selector, SelectionKey.OP_ACCEPT)
 
-        while (isRunning) {
-            selector.select()
-            val selectedKeys = selector.selectedKeys().iterator()
+        thread = Thread {
+            while (isRunning) {
+                selector.select()
+                val selectedKeys = selector.selectedKeys().iterator()
 
-            while (selectedKeys.hasNext()) {
-                val key = selectedKeys.next()
-                selectedKeys.remove()
+                while (selectedKeys.hasNext()) {
+                    val key = selectedKeys.next()
+                    selectedKeys.remove()
 
-                if (!key.isValid) {
-                    continue
-                }
+                    if (!key.isValid) {
+                        continue
+                    }
 
-                if (key.isAcceptable) {
-                    acceptConnection(key)
-                }
+                    if (key.isAcceptable) {
+                        acceptConnection(key)
+                    }
 
-                if (key.isReadable) {
-                    readData(key)
+                    if (key.isReadable) {
+                        readData(key)
+                    }
                 }
             }
+            // Clean up resources before exiting
+            serverSocket?.close()
+            selector?.close()
         }
     }
 
@@ -82,15 +94,35 @@ class RemoteServer {
         val buffer = ByteBuffer.allocate(1024)
         val bytesRead = socketChannel.read(buffer)
         val data = buffer.array().sliceArray(0 until bytesRead)
+        try {
+            val json = JSONObject(String(data))
 
-        if (bytesRead == -1 || String(data) == "stop\n") {
-            println("Connection closed by ${socketChannel.remoteAddress}")
-            socketChannel.close()
-            key.cancel()
-            return
+            if (bytesRead == -1 || json.get("type") == "stop") {
+                println("Connection closed by ${socketChannel.remoteAddress}")
+                socketChannel.close()
+                key.cancel()
+                return
+            }
+
+            println("Received data: ${String(data)}")
+
+            process(json)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
+    }
 
-        println("Received data: ${String(data)}")
+    private fun process(json: JSONObject) {
+        val type = json.get("type")
+        if (type == "mouse") {
+            val x = json.getDouble("x")
+            val y = json.getDouble("y")
+            mouseCursor?.invoke(x, y)
+        } else if (type == "single_tap") {
+            val x = json.getDouble("x")
+            val y = json.getDouble("y")
+            tapOn?.invoke(x, y)
+        }
     }
 
 }

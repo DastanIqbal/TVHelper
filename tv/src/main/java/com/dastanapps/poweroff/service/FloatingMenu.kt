@@ -11,7 +11,9 @@ import android.view.View
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.FrameLayout
+import android.widget.ImageView
 import com.dastanapps.poweroff.R
+
 
 /**
  *
@@ -24,13 +26,35 @@ class FloatingMenu(
 
     private val context get() = service
 
+    private val density by lazy { context.resources.displayMetrics.density }
+
+    private val boundaryXRight by lazy {
+        context.resources.displayMetrics.widthPixels - cursorIcon?.width!!
+    }
+
+    private val boundaryYBottom by lazy {
+        context.resources.displayMetrics.heightPixels - cursorIcon?.height!!
+    }
+
+
     private var mLayout: FrameLayout? = null
+    private var cursorIcon: ImageView? = null
+    private var cursorLayout: WindowManager.LayoutParams? = null
+    private val windowManager: WindowManager by lazy {
+        context.getSystemService(AccessibilityService.WINDOW_SERVICE) as WindowManager
+    }
+
 
     fun onServiceConnected() {
-        // Create an overlay and display the action bar
-        val wm = context.getSystemService(AccessibilityService.WINDOW_SERVICE) as WindowManager
-
         mLayout = FrameLayout(context)
+        cursorIcon = ImageView(context)
+
+        cursorIcon?.layoutParams = FrameLayout.LayoutParams(
+            (30 * density).toInt(),
+            (30 * density).toInt()
+        )
+
+        cursorIcon?.setImageResource(R.drawable.baseline_mouse_24)
 
         val lp = WindowManager.LayoutParams().apply {
             type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
@@ -44,7 +68,19 @@ class FloatingMenu(
         LayoutInflater.from(context)
             .inflate(R.layout.activity_main, mLayout)
 
-        wm.addView(mLayout, lp)
+        cursorLayout = WindowManager.LayoutParams().apply {
+            width = WindowManager.LayoutParams.WRAP_CONTENT
+            height = WindowManager.LayoutParams.WRAP_CONTENT
+            type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
+            flags = WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD or
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+            format = PixelFormat.TRANSLUCENT
+        }
+
+
+        windowManager.addView(cursorIcon, cursorLayout)
+        windowManager.addView(mLayout, lp)
 
         configurePowerButton();
         configureHomeButton();
@@ -56,19 +92,57 @@ class FloatingMenu(
         TVHelperService.IS_RUNNING = true
     }
 
+    fun moveCursor(x: Double, y: Double) {
+        cursorIcon?.run {
+            val boundaryX = this.x + x.toFloat()
+            val boundaryY = this.y + y.toFloat()
+
+            if (boundaryX > 0 && boundaryX < boundaryXRight)
+                translationX = boundaryX
+
+            if (boundaryY > 0 && boundaryY < boundaryYBottom)
+                translationY = boundaryY
+        }
+    }
+
+    fun performAction(code: Int) {
+        service.performGlobalAction(code)
+    }
+
+    private val callback = object : AccessibilityService.GestureResultCallback() {
+        override fun onCancelled(gestureDescription: GestureDescription?) {
+            super.onCancelled(gestureDescription)
+            println("gesture cancelled");
+        }
+
+        override fun onCompleted(gestureDescription: GestureDescription?) {
+            super.onCompleted(gestureDescription)
+            println("gesture completed");
+        }
+    };
+
+    fun tapOn(x: Float, y: Float) {
+        val swipePath = Path()
+        swipePath.moveTo(x, y)
+//        swipePath.lineTo(x, y)
+        val clickBuilder = GestureDescription.Builder()
+        clickBuilder.addStroke(GestureDescription.StrokeDescription(swipePath, 0, 10))
+        service.dispatchGesture(clickBuilder.build(), callback, null)
+    }
+
     private fun configureRecentButton() {
         val powerButton = mLayout?.findViewById<View>(R.id.recent)
-        powerButton?.setOnClickListener { service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_RECENTS) }
+        powerButton?.setOnClickListener { performAction(AccessibilityService.GLOBAL_ACTION_RECENTS) }
     }
 
     private fun configureHomeButton() {
         val powerButton = mLayout?.findViewById<View>(R.id.home)
-        powerButton?.setOnClickListener { service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME) }
+        powerButton?.setOnClickListener { performAction(AccessibilityService.GLOBAL_ACTION_HOME) }
     }
 
     private fun configurePowerButton() {
         val powerButton = mLayout?.findViewById<View>(R.id.power)
-        powerButton?.setOnClickListener { service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_POWER_DIALOG) }
+        powerButton?.setOnClickListener { performAction(AccessibilityService.GLOBAL_ACTION_POWER_DIALOG) }
     }
 
     private fun configureVolumeButton() {
@@ -109,12 +183,7 @@ class FloatingMenu(
     private fun configureSwipeButton() {
         val swipeButton = mLayout?.findViewById<View>(R.id.swipe)
         swipeButton?.setOnClickListener {
-            val swipePath = Path()
-            swipePath.moveTo(1000F, 1000F)
-            swipePath.lineTo(100F, 1000F)
-            val gestureBuilder = GestureDescription.Builder()
-            gestureBuilder.addStroke(GestureDescription.StrokeDescription(swipePath, 0, 500))
-            service.dispatchGesture(gestureBuilder.build(), null, null)
+            tapOn(1000F, 1000F)
         }
     }
 }

@@ -26,12 +26,22 @@ class TVHelperService : AccessibilityService() {
         super.onServiceConnected()
         floatingMenu.onServiceConnected()
         IS_RUNNING = true
-//        remoteServer.start()
+
+        remoteServer.mouseCursor = { x, y ->
+            floatingMenu.moveCursor(x, y)
+        }
+
+        remoteServer.tapOn = { x, y ->
+            floatingMenu.tapOn(x.toFloat(), y.toFloat())
+        }
+
+        remoteServer.start()
     }
 
     override fun onDestroy() {
         super.onDestroy()
         IS_RUNNING = false
+        remoteServer.stop()
     }
 
     companion object {

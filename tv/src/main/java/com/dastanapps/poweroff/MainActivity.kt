@@ -58,7 +58,7 @@ class MainActivity : ComponentActivity() {
     private val serverState by lazy {
         ServerState(
             startServer = {
-
+                startService(Intent(this, TVHelperService::class.java))
             }
         )
     }
