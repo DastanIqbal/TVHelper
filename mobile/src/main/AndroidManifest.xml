@@ -24,7 +24,7 @@
             </intent-filter>
         </activity>
         <service
-            android:name=".TVHelperService"
+            android:name=".service.TVHelperService"
             android:exported="true"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>

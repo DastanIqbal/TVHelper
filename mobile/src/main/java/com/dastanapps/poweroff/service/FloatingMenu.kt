@@ -1,8 +1,7 @@
-package com.dastanapps.poweroff
+package com.dastanapps.poweroff.service
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
-import android.accessibilityservice.GestureDescription.StrokeDescription
 import android.graphics.Path
 import android.graphics.PixelFormat
 import android.media.AudioManager
@@ -10,21 +9,23 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
-import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.FrameLayout
+import com.dastanapps.poweroff.R
 
+class FloatingMenu(
+    private val service: TVHelperService
+) {
 
-class TVHelperService : AccessibilityService() {
-    var mLayout: FrameLayout? = null
-    override fun onAccessibilityEvent(event: AccessibilityEvent) {}
-    override fun onInterrupt() {}
-    override fun onServiceConnected() {
-        super.onServiceConnected()
+    private val context get() = service
+
+    private var mLayout: FrameLayout? = null
+
+    fun onServiceConnected() {
         // Create an overlay and display the action bar
-        val wm = getSystemService(WINDOW_SERVICE) as WindowManager
+        val wm = context.getSystemService(AccessibilityService.WINDOW_SERVICE) as WindowManager
 
-        mLayout = FrameLayout(this)
+        mLayout = FrameLayout(context)
 
         val lp = WindowManager.LayoutParams().apply {
             type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
@@ -35,7 +36,7 @@ class TVHelperService : AccessibilityService() {
             gravity = Gravity.RIGHT
         }
 
-        LayoutInflater.from(this)
+        LayoutInflater.from(context)
             .inflate(R.layout.activity_main, mLayout)
 
         wm.addView(mLayout, lp)
@@ -47,33 +48,29 @@ class TVHelperService : AccessibilityService() {
         configureScrollButton();
         configureSwipeButton();
 
-        IS_RUNNING = true
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        IS_RUNNING = false
+        TVHelperService.IS_RUNNING = true
     }
 
     private fun configureRecentButton() {
         val powerButton = mLayout?.findViewById<View>(R.id.recent)
-        powerButton?.setOnClickListener { performGlobalAction(GLOBAL_ACTION_RECENTS) }
+        powerButton?.setOnClickListener { service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_RECENTS) }
     }
 
     private fun configureHomeButton() {
         val powerButton = mLayout?.findViewById<View>(R.id.home)
-        powerButton?.setOnClickListener { performGlobalAction(GLOBAL_ACTION_HOME) }
+        powerButton?.setOnClickListener { service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME) }
     }
 
     private fun configurePowerButton() {
         val powerButton = mLayout?.findViewById<View>(R.id.power)
-        powerButton?.setOnClickListener { performGlobalAction(GLOBAL_ACTION_POWER_DIALOG) }
+        powerButton?.setOnClickListener { service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_POWER_DIALOG) }
     }
 
     private fun configureVolumeButton() {
         val volumeUpButton = mLayout?.findViewById<View>(R.id.volume_up)
         volumeUpButton?.setOnClickListener {
-            val audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
+            val audioManager =
+                context.getSystemService(AccessibilityService.AUDIO_SERVICE) as AudioManager
             audioManager.adjustStreamVolume(
                 AudioManager.STREAM_MUSIC,
                 AudioManager.ADJUST_RAISE, AudioManager.FLAG_SHOW_UI
@@ -99,7 +96,7 @@ class TVHelperService : AccessibilityService() {
     private fun configureScrollButton() {
         val scrollButton = mLayout?.findViewById<View>(R.id.scroll)
         scrollButton?.setOnClickListener {
-            val scrollable = findScrollableNode(rootInActiveWindow)
+            val scrollable = findScrollableNode(service.rootInActiveWindow)
             scrollable?.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_FORWARD.id)
         }
     }
@@ -111,12 +108,8 @@ class TVHelperService : AccessibilityService() {
             swipePath.moveTo(1000F, 1000F)
             swipePath.lineTo(100F, 1000F)
             val gestureBuilder = GestureDescription.Builder()
-            gestureBuilder.addStroke(StrokeDescription(swipePath, 0, 500))
-            dispatchGesture(gestureBuilder.build(), null, null)
+            gestureBuilder.addStroke(GestureDescription.StrokeDescription(swipePath, 0, 500))
+            service.dispatchGesture(gestureBuilder.build(), null, null)
         }
-    }
-
-    companion object {
-        var IS_RUNNING = false
     }
 }
