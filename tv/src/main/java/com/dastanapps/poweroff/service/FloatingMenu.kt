@@ -4,6 +4,7 @@ import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
 import android.graphics.Path
 import android.graphics.PixelFormat
+import android.graphics.Point
 import android.media.AudioManager
 import android.os.Handler
 import android.os.Looper
@@ -139,12 +140,29 @@ class FloatingMenu(
             val boundaryX = this.x + x + (iconSize * density) / 2.0f
             val boundaryY = this.y + y + (iconSize * density) / 2.0f
 
-            val swipePath = Path()
-            swipePath.moveTo(boundaryX, boundaryY)
-            swipePath.lineTo(boundaryX, boundaryY)
-            val clickBuilder = GestureDescription.Builder()
-            clickBuilder.addStroke(GestureDescription.StrokeDescription(swipePath, 0, 10))
-            service.dispatchGesture(clickBuilder.build(), callback, null)
+            val list = findNode(
+                service,
+                service.rootInActiveWindow,
+                Point(boundaryX.toInt(), boundaryY.toInt())
+            )
+
+            var consumed = false
+            list?.forEach loop@{
+                if (it.actionList.contains(AccessibilityNodeInfo.AccessibilityAction.ACTION_CLICK)) {
+                    it.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                    consumed = true
+                    return@loop
+                }
+            }
+
+            if (!consumed) {
+                val swipePath = Path()
+                swipePath.moveTo(boundaryX, boundaryY)
+                swipePath.lineTo(boundaryX, boundaryY)
+                val clickBuilder = GestureDescription.Builder()
+                clickBuilder.addStroke(GestureDescription.StrokeDescription(swipePath, 0, 10))
+                service.dispatchGesture(clickBuilder.build(), callback, null)
+            }
         }
     }
 

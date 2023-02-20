@@ -97,10 +97,10 @@ fun HelperScreen(
     ) {
 
         AccessibilityScreen(state = state)
-        Divider(
-            thickness = 1.dp
-        )
-        ServerScreen(state = serverState)
+//        Divider(
+//            thickness = 1.dp
+//        )
+//        ServerScreen(state = serverState)
     }
 }
 

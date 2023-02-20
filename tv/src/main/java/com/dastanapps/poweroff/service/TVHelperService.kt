@@ -1,6 +1,7 @@
 package com.dastanapps.poweroff.service
 
 import android.accessibilityservice.AccessibilityService
+import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import com.dastanapps.poweroff.server.RemoteServer
 
@@ -11,6 +12,7 @@ import com.dastanapps.poweroff.server.RemoteServer
  *
  */
 class TVHelperService : AccessibilityService() {
+    private val TAG = TVHelperService::class.java.simpleName
 
     private val floatingMenu by lazy {
         FloatingMenu(this)
@@ -20,7 +22,10 @@ class TVHelperService : AccessibilityService() {
         RemoteServer()
     }
 
-    override fun onAccessibilityEvent(event: AccessibilityEvent) {}
+    override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        Log.d(TAG, event.toString())
+    }
+
     override fun onInterrupt() {}
     override fun onServiceConnected() {
         super.onServiceConnected()
