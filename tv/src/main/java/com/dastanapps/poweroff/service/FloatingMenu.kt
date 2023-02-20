@@ -90,12 +90,14 @@ class FloatingMenu(
             cursorLayout
         )
 
-        configurePowerButton();
-        configureHomeButton();
-        configureRecentButton();
-        configureVolumeButton();
-        configureScrollButton();
-        configureSwipeButton();
+        configurePowerButton()
+        configureHomeButton()
+        configureRecentButton()
+        configureBackButton()
+
+        configureVolumeButton()
+        configureScrollButton()
+        configureSwipeButton()
 
         TVHelperService.IS_RUNNING = true
     }
@@ -143,6 +145,11 @@ class FloatingMenu(
             clickBuilder.addStroke(GestureDescription.StrokeDescription(swipePath, 0, 10))
             service.dispatchGesture(clickBuilder.build(), callback, null)
         }
+    }
+
+    private fun configureBackButton() {
+        val powerButton = mLayout?.findViewById<View>(R.id.back)
+        powerButton?.setOnClickListener { performAction(AccessibilityService.GLOBAL_ACTION_BACK) }
     }
 
     private fun configureRecentButton() {
