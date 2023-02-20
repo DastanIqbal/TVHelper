@@ -3,95 +3,26 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp"
     tools:context=".MainActivity">
 
-    <TextView
+    <View
         android:id="@+id/mousePad"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:background="@android:color/holo_blue_dark"
         android:clickable="true"
-        app:layout_constraintBottom_toTopOf="@+id/ll_control"
+        app:layout_constraintBottom_toTopOf="@+id/dpadView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/ll_control"
-        android:layout_width="wrap_content"
+    <com.dastanapps.poweroff.wifi.DPadView
+        android:id="@+id/dpadView"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
-
-        <TextView
-            android:id="@+id/btn_l"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="8dp"
-            android:background="#ff0"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="4dp"
-            android:text="L"
-            app:layout_constraintEnd_toStartOf="@+id/btn_center"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/btn_t" />
-
-
-        <TextView
-            android:id="@+id/btn_r"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="8dp"
-            android:background="#ff0"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="4dp"
-            android:text="R"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/btn_center"
-            app:layout_constraintTop_toBottomOf="@+id/btn_t" />
-
-        <TextView
-            android:id="@+id/btn_center"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:background="#ff0"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="4dp"
-            android:text="C"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/btn_t" />
-
-        <TextView
-            android:id="@+id/btn_t"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="#ff0"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="4dp"
-            android:text="T"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:id="@+id/btn_b"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:background="#ff0"
-            android:paddingHorizontal="16dp"
-            android:paddingVertical="4dp"
-            android:text="B"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/btn_center" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
