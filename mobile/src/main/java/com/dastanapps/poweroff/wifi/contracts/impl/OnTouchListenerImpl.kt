@@ -65,7 +65,7 @@ class OnTouchListenerImpl(
                     val deltaX = event.rawX - rawLastX
                     val deltaY = event.rawY - rawLastY
                     val distance = sqrt((deltaX * deltaX + deltaY * deltaY).toDouble())
-                    if (distance > 2) {
+                    if (distance > 5) {
                         startTime = 0
                     }
                     true
