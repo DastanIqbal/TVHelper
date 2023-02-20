@@ -1,9 +1,10 @@
 package com.dastanapps.poweroff.wifi.contracts.impl
 
 import android.annotation.SuppressLint
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
-import com.dastanapps.poweroff.wifi.Constants
+import com.dastanapps.poweroff.common.RemoteEvent
 import com.dastanapps.poweroff.wifi.net.ConnectionDataStream
 import org.json.JSONObject
 import kotlin.math.sqrt
@@ -16,6 +17,8 @@ import kotlin.math.sqrt
 class OnTouchListenerImpl(
     private val dataStream: ConnectionDataStream,
 ) : View.OnTouchListener {
+    private val TAG = this::class.java.simpleName
+
     private var lastX = 0f
     private var lastY = 0f
 
@@ -45,30 +48,47 @@ class OnTouchListenerImpl(
                 }
 
                 MotionEvent.ACTION_MOVE -> {
-                    disX = event.x - lastX //Mouse movement in x direction
-                    disY = event.y - lastY //Mouse movement in y direction
+                    if (event.pointerCount == 2) {
+                        //Scroll
+                        val y = event.y
+                        val scrollDeltaY: Float = y - lastY
+                        Log.d(TAG, "====> $scrollDeltaY <====")
+                        if (scrollDeltaY > 2) {
+                            dataStream.sendType(RemoteEvent.SCROLL_DOWN.name)
+                        } else if (scrollDeltaY < -2) {
+                            dataStream.sendType(RemoteEvent.SCROLL_UP.name)
+                        }
+                        lastX = event.x
+                        lastY = event.y
+                        return true
+                    } else {
+                        // Move Cursor
+                        disX = event.x - lastX //Mouse movement in x direction
+                        disY = event.y - lastY //Mouse movement in y direction
 
-                    lastX = event.x
-                    lastY = event.y
+                        lastX = event.x
+                        lastY = event.y
 
-                    if (disX != 0f || disY != 0f) {
-                        dataStream.sendCommands(
-                            JSONObject().apply {
-                                put("type", "mouse")
-                                put("x", disX)
-                                put("y", disY)
+                        if (disX != 0f || disY != 0f) {
+                            dataStream.sendCommands(
+                                JSONObject().apply {
+                                    put("type", RemoteEvent.MOUSE.name)
+                                    put("x", disX)
+                                    put("y", disY)
 
-                            }.toString()
-                        )
+                                }.toString()
+                            )
+                        }
+
+                        // Detect Tap
+                        val deltaX = event.rawX - rawLastX
+                        val deltaY = event.rawY - rawLastY
+                        val distance = sqrt((deltaX * deltaX + deltaY * deltaY).toDouble())
+                        if (distance > 5) {
+                            startTime = 0
+                        }
+                        true
                     }
-                    // Detect Tap
-                    val deltaX = event.rawX - rawLastX
-                    val deltaY = event.rawY - rawLastY
-                    val distance = sqrt((deltaX * deltaX + deltaY * deltaY).toDouble())
-                    if (distance > 5) {
-                        startTime = 0
-                    }
-                    true
                 }
 
                 MotionEvent.ACTION_UP -> {
@@ -76,7 +96,7 @@ class OnTouchListenerImpl(
                     if (duration < 200) {
                         dataStream.sendCommands(
                             JSONObject().apply {
-                                put("type", Constants.SINGLE_TAP)
+                                put("type", RemoteEvent.SINGLE_TAP.name)
                                 put("x", disX)
                                 put("y", disY)
 

@@ -15,6 +15,7 @@ import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.FrameLayout
 import android.widget.ImageView
 import com.dastanapps.poweroff.R
+import com.dastanapps.poweroff.common.RemoteEvent
 
 
 /**
@@ -136,7 +137,7 @@ class FloatingMenu(
     fun tapOn(x: Float, y: Float) {
         cursorIcon?.run {
             val boundaryX = this.x + x + (iconSize * density) / 2.0f
-            val boundaryY = this.y + y + (iconSize * density) + iconSize
+            val boundaryY = this.y + y + (iconSize * density) / 2.0f
 
             val swipePath = Path()
             swipePath.moveTo(boundaryX, boundaryY)
@@ -144,6 +145,26 @@ class FloatingMenu(
             val clickBuilder = GestureDescription.Builder()
             clickBuilder.addStroke(GestureDescription.StrokeDescription(swipePath, 0, 10))
             service.dispatchGesture(clickBuilder.build(), callback, null)
+        }
+    }
+
+    fun scroll(type: String) {
+        when (type) {
+            RemoteEvent.SCROLL_UP.name -> {
+                val scrollable = findScrollableNode(
+                    service.rootInActiveWindow.getChild(0),
+                    AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_FORWARD
+                )
+                scrollable?.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_FORWARD.id)
+            }
+
+            RemoteEvent.SCROLL_DOWN.name -> {
+                val scrollable = findScrollableNode(
+                    service.rootInActiveWindow.getChild(0),
+                    AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_BACKWARD
+                )
+                scrollable?.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_BACKWARD.id)
+            }
         }
     }
 
@@ -178,12 +199,15 @@ class FloatingMenu(
         }
     }
 
-    private fun findScrollableNode(root: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+    private fun findScrollableNode(
+        root: AccessibilityNodeInfo,
+        scrollDirection: AccessibilityNodeInfo.AccessibilityAction
+    ): AccessibilityNodeInfo? {
         val deque: ArrayDeque<AccessibilityNodeInfo> = ArrayDeque()
         deque.add(root)
         while (!deque.isEmpty()) {
             val node = deque.removeFirst()
-            if (node.actionList.contains(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_FORWARD)) {
+            if (node.actionList.contains(scrollDirection)) {
                 return node
             }
             for (i in 0 until node.childCount) {
@@ -196,7 +220,10 @@ class FloatingMenu(
     private fun configureScrollButton() {
         val scrollButton = mLayout?.findViewById<View>(R.id.scroll)
         scrollButton?.setOnClickListener {
-            val scrollable = findScrollableNode(service.rootInActiveWindow)
+            val scrollable = findScrollableNode(
+                service.rootInActiveWindow,
+                AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_FORWARD
+            )
             scrollable?.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_FORWARD.id)
         }
     }

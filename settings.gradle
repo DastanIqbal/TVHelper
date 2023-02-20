@@ -15,3 +15,4 @@ dependencyResolutionManagement {
 rootProject.name = "AndroidTV Apps"
 include ':mobile'
 include ':tv'
+include ':common'

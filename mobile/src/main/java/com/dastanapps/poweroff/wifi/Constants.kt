@@ -6,12 +6,8 @@ package com.dastanapps.poweroff.wifi
  *
  */
 object Constants {
-    const val SERVER_IP = "192.168.1.10"
+    const val SERVER_IP = "192.168.1.14"
     const val SERVER_PORT = 8585
-    const val PLAY = "play"
-    const val NEXT = "next"
-    const val PREVIOUS = "previous"
     const val STOP = "stop"
-    const val SINGLE_TAP = "single_tap"
 
 }

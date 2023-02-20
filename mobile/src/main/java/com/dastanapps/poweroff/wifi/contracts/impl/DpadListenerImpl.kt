@@ -1,8 +1,8 @@
 package com.dastanapps.poweroff.wifi.contracts.impl
 
-import com.dastanapps.poweroff.wifi.net.ConnectionDataStream
-import com.dastanapps.poweroff.wifi.dpad.DPadEvent
+import com.dastanapps.poweroff.common.RemoteEvent
 import com.dastanapps.poweroff.wifi.contracts.IDpadListener
+import com.dastanapps.poweroff.wifi.net.ConnectionDataStream
 
 /**
  *
@@ -13,23 +13,23 @@ import com.dastanapps.poweroff.wifi.contracts.IDpadListener
 class DpadListenerImpl(
     private val dataStream: ConnectionDataStream
 ) : IDpadListener {
-    override fun center(event: DPadEvent) {
-        dataStream.sendType(DPadEvent.CENTER.name)
+    override fun center(event: RemoteEvent) {
+        dataStream.sendType(RemoteEvent.DPAD_CENTER.name)
     }
 
-    override fun left(event: DPadEvent) {
-        dataStream.sendType(DPadEvent.LEFT.name)
+    override fun left(event: RemoteEvent) {
+        dataStream.sendType(RemoteEvent.DPAD_LEFT.name)
     }
 
-    override fun right(event: DPadEvent) {
-        dataStream.sendType(DPadEvent.RIGHT.name)
+    override fun right(event: RemoteEvent) {
+        dataStream.sendType(RemoteEvent.DPAD_RIGHT.name)
     }
 
-    override fun top(event: DPadEvent) {
-        dataStream.sendType(DPadEvent.TOP.name)
+    override fun top(event: RemoteEvent) {
+        dataStream.sendType(RemoteEvent.DPAD_TOP.name)
     }
 
-    override fun bottom(event: DPadEvent) {
-        dataStream.sendType(DPadEvent.BOTTOM.name)
+    override fun bottom(event: RemoteEvent) {
+        dataStream.sendType(RemoteEvent.DPAD_BOTTOM.name)
     }
 }

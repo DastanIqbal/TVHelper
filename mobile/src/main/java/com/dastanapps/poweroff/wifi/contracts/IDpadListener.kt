@@ -1,6 +1,6 @@
 package com.dastanapps.poweroff.wifi.contracts
 
-import com.dastanapps.poweroff.wifi.dpad.DPadEvent
+import com.dastanapps.poweroff.common.RemoteEvent
 
 /**
  *
@@ -8,9 +8,9 @@ import com.dastanapps.poweroff.wifi.dpad.DPadEvent
  *
  */
 interface IDpadListener {
-    fun center(event: DPadEvent)
-    fun left(event: DPadEvent)
-    fun right(event: DPadEvent)
-    fun top(event: DPadEvent)
-    fun bottom(event: DPadEvent)
+    fun center(event: RemoteEvent)
+    fun left(event: RemoteEvent)
+    fun right(event: RemoteEvent)
+    fun top(event: RemoteEvent)
+    fun bottom(event: RemoteEvent)
 }

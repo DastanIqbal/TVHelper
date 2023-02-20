@@ -35,6 +35,10 @@ class TVHelperService : AccessibilityService() {
             floatingMenu.tapOn(x.toFloat(), y.toFloat())
         }
 
+        remoteServer.scroll = { type ->
+            floatingMenu.scroll(type)
+        }
+
         remoteServer.start()
     }
 

@@ -16,7 +16,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <com.dastanapps.poweroff.wifi.DPadView
+    <com.dastanapps.poweroff.wifi.dpad.DPadView
         android:id="@+id/dpadView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

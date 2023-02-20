@@ -1,5 +1,6 @@
 package com.dastanapps.poweroff.server
 
+import com.dastanapps.poweroff.common.RemoteEvent
 import com.dastanapps.poweroff.utils.NetworkUtils.getSystemIP
 import org.json.JSONObject
 import java.net.InetSocketAddress
@@ -27,6 +28,7 @@ class RemoteServer {
 
     var mouseCursor: ((x: Double, y: Double) -> Unit)? = null
     var tapOn: ((x: Double, y: Double) -> Unit)? = null
+    var scroll: ((type: String) -> Unit)? = null
 
     fun start() {
         isRunning = true
@@ -97,7 +99,7 @@ class RemoteServer {
         try {
             val json = JSONObject(String(data))
 
-            if (bytesRead == -1 || json.get("type") == "stop") {
+            if (bytesRead == -1 || json.get("type") == RemoteEvent.STOP_SERVER.name) {
                 println("Connection closed by ${socketChannel.remoteAddress}")
                 socketChannel.close()
                 key.cancel()
@@ -113,15 +115,27 @@ class RemoteServer {
     }
 
     private fun process(json: JSONObject) {
-        val type = json.get("type")
-        if (type == "mouse") {
-            val x = json.getDouble("x")
-            val y = json.getDouble("y")
-            mouseCursor?.invoke(x, y)
-        } else if (type == "single_tap") {
-            val x = json.getDouble("x")
-            val y = json.getDouble("y")
-            tapOn?.invoke(x, y)
+        val type = json.getString("type")
+        when (type) {
+            RemoteEvent.MOUSE.name -> {
+                val x = json.getDouble("x")
+                val y = json.getDouble("y")
+                mouseCursor?.invoke(x, y)
+            }
+
+            RemoteEvent.SINGLE_TAP.name -> {
+                val x = json.getDouble("x")
+                val y = json.getDouble("y")
+                tapOn?.invoke(x, y)
+            }
+
+            RemoteEvent.SCROLL_UP.name -> {
+                scroll?.invoke(type)
+            }
+
+            RemoteEvent.SCROLL_DOWN.name -> {
+                scroll?.invoke(type)
+            }
         }
     }
 
