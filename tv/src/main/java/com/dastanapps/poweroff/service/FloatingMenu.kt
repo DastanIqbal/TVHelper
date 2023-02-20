@@ -5,6 +5,8 @@ import android.accessibilityservice.GestureDescription
 import android.graphics.Path
 import android.graphics.PixelFormat
 import android.media.AudioManager
+import android.os.Handler
+import android.os.Looper
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -25,6 +27,7 @@ class FloatingMenu(
 ) {
 
     private val context get() = service
+    private val handler = Handler(Looper.getMainLooper())
 
     private val density by lazy { context.resources.displayMetrics.density }
 
@@ -44,14 +47,15 @@ class FloatingMenu(
         context.getSystemService(AccessibilityService.WINDOW_SERVICE) as WindowManager
     }
 
+    private val iconSize = 30
+
 
     fun onServiceConnected() {
         mLayout = FrameLayout(context)
         cursorIcon = ImageView(context)
 
         cursorIcon?.layoutParams = FrameLayout.LayoutParams(
-            (30 * density).toInt(),
-            (30 * density).toInt()
+            (iconSize * density).toInt(), (iconSize * density).toInt()
         )
 
         cursorIcon?.setImageResource(R.drawable.baseline_mouse_24)
@@ -65,22 +69,26 @@ class FloatingMenu(
             gravity = Gravity.RIGHT
         }
 
-        LayoutInflater.from(context)
-            .inflate(R.layout.activity_main, mLayout)
+        LayoutInflater.from(context).inflate(R.layout.activity_main, mLayout)
 
         cursorLayout = WindowManager.LayoutParams().apply {
-            width = WindowManager.LayoutParams.WRAP_CONTENT
-            height = WindowManager.LayoutParams.WRAP_CONTENT
+            width = WindowManager.LayoutParams.MATCH_PARENT
+            height = WindowManager.LayoutParams.MATCH_PARENT
             type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
-            flags = WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD or
-                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+            flags =
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
             format = PixelFormat.TRANSLUCENT
         }
 
 
-        windowManager.addView(cursorIcon, cursorLayout)
         windowManager.addView(mLayout, lp)
+
+        windowManager.addView(
+            FrameLayout(context).apply {
+                addView(cursorIcon)
+            },
+            cursorLayout
+        )
 
         configurePowerButton();
         configureHomeButton();
@@ -93,15 +101,17 @@ class FloatingMenu(
     }
 
     fun moveCursor(x: Double, y: Double) {
-        cursorIcon?.run {
-            val boundaryX = this.x + x.toFloat()
-            val boundaryY = this.y + y.toFloat()
+        handler.post {
+            cursorIcon?.run {
+                val boundaryX = this.x + x.toFloat()
+                val boundaryY = this.y + y.toFloat()
 
-            if (boundaryX > 0 && boundaryX < boundaryXRight)
-                translationX = boundaryX
+                if (boundaryX > 0 && boundaryX < boundaryXRight)
+                    translationX = boundaryX
 
-            if (boundaryY > 0 && boundaryY < boundaryYBottom)
-                translationY = boundaryY
+                if (boundaryY > 0 && boundaryY < boundaryYBottom)
+                    translationY = boundaryY
+            }
         }
     }
 
@@ -122,12 +132,17 @@ class FloatingMenu(
     };
 
     fun tapOn(x: Float, y: Float) {
-        val swipePath = Path()
-        swipePath.moveTo(x, y)
-//        swipePath.lineTo(x, y)
-        val clickBuilder = GestureDescription.Builder()
-        clickBuilder.addStroke(GestureDescription.StrokeDescription(swipePath, 0, 10))
-        service.dispatchGesture(clickBuilder.build(), callback, null)
+        cursorIcon?.run {
+            val boundaryX = this.x + x + (iconSize * density) / 2.0f
+            val boundaryY = this.y + y + (iconSize * density) + iconSize
+
+            val swipePath = Path()
+            swipePath.moveTo(boundaryX, boundaryY)
+            swipePath.lineTo(boundaryX, boundaryY)
+            val clickBuilder = GestureDescription.Builder()
+            clickBuilder.addStroke(GestureDescription.StrokeDescription(swipePath, 0, 10))
+            service.dispatchGesture(clickBuilder.build(), callback, null)
+        }
     }
 
     private fun configureRecentButton() {
@@ -151,8 +166,7 @@ class FloatingMenu(
             val audioManager =
                 context.getSystemService(AccessibilityService.AUDIO_SERVICE) as AudioManager
             audioManager.adjustStreamVolume(
-                AudioManager.STREAM_MUSIC,
-                AudioManager.ADJUST_RAISE, AudioManager.FLAG_SHOW_UI
+                AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, AudioManager.FLAG_SHOW_UI
             )
         }
     }

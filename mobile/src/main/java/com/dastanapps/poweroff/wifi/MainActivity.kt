@@ -33,10 +33,16 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     private var isConnected = false
     private var socket: Socket? = null
     private var out: PrintWriter? = null
+
     private var lastX = 0f
     private var lastY = 0f
+
+    private var rawLastX = 0f
+    private var rawLastY = 0f
+
     private var disX = 0f
     private var disY = 0f
+
     private var startTime = 0L
 
 
@@ -69,7 +75,12 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                         //save X and Y positions when user touches the TextView
                         lastX = event.x
                         lastY = event.y
+
+                        rawLastX = event.rawX
+                        rawLastY = event.rawY
+
                         startTime = System.currentTimeMillis()
+                        true
                     }
 
                     MotionEvent.ACTION_MOVE -> {
@@ -90,16 +101,19 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                             )
                         }
                         // Detect Tap
-                        val distance = sqrt((disX * disX + disY * disY).toDouble())
-                        if (distance > 10) {
+                        val deltaX = event.rawX - rawLastX
+                        val deltaY = event.rawY - rawLastY
+                        val distance = sqrt((deltaX * deltaX + deltaY * deltaY).toDouble())
+                        if (distance > 2) {
                             startTime = 0
                         }
+                        true
                     }
 
                     MotionEvent.ACTION_UP -> {
                         val duration = System.currentTimeMillis() - startTime
                         if (duration < 200) {
-                            sendType(
+                            sendCommands(
                                 JSONObject().apply {
                                     put("type", Constants.SINGLE_TAP)
                                     put("x", disX)
@@ -109,10 +123,16 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                             )
                         }
                         startTime = 0
+                        true
+                    }
+
+                    else -> {
+                        false
                     }
                 }
+            } else {
+                false
             }
-            true
         }
     }
 

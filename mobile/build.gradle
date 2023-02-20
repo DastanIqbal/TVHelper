@@ -8,7 +8,7 @@ android {
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.dastanapps.poweroff"
+        applicationId "com.dastanapps.poweroff.mobile"
         minSdk 24
         targetSdk 33
         versionCode 1
