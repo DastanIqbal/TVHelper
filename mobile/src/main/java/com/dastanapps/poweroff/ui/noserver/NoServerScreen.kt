@@ -1,5 +1,6 @@
 package com.dastanapps.poweroff.ui.noserver
 
+import android.app.Activity
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -14,7 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
@@ -68,6 +69,7 @@ class NoServerScreen : ComponentActivity() {
                         Handler(Looper.getMainLooper())
                             .postDelayed({
                                 if (!isFinishing) {
+                                    setResult(Activity.RESULT_OK)
                                     finish()
                                 }
                             }, 1000)
@@ -114,23 +116,10 @@ class NoServerScreen : ComponentActivity() {
                         if (progressStatus.value) {
                             Progress()
                         }
-                        addSavedIp(savedServerIp)
-                        Servers(serverState)
+                        Servers(serverState, savedServerIp)
                     }
                 }
             }
-        }
-    }
-
-    private fun addSavedIp(savedServerIp: MutableState<String>) {
-        if (savedServerIp.value.isNotEmpty()) {
-            serverState.servers.value = arrayListOf(
-                ServerAddress(
-                    savedServerIp.value,
-                    Constants.SERVER_PORT,
-                    true
-                )
-            )
         }
     }
 }
@@ -147,11 +136,21 @@ fun Progress() {
 }
 
 @Composable
-fun Servers(serverState: ServerFoundState) {
+fun Servers(serverState: ServerFoundState, savedServerIp: MutableState<String>) {
+    if (savedServerIp.value.isNotEmpty()) {
+        val serverAddress = ServerAddress(
+            savedServerIp.value,
+            Constants.SERVER_PORT,
+            true
+        )
+        ServerItem(pair = serverAddress, serverState) { item, uiState ->
+            serverState.connect(item, uiState)
+        }
+    }
     LazyColumn(content = {
-        items(serverState.servers.value) {
-            ServerItem(pair = it, serverState) { it, uiState ->
-                serverState.connect(it, uiState)
+        itemsIndexed(serverState.servers.value) { index, it ->
+            ServerItem(pair = it, serverState) { item, uiState ->
+                serverState.connect(item, uiState)
             }
         }
     })

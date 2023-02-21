@@ -22,18 +22,28 @@ class TVHelperService : AccessibilityService() {
         RemoteServer()
     }
 
+    private val timer by lazy { ToggleUITimer() }
+
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
         Log.d(TAG, event.toString())
     }
 
-    override fun onInterrupt() {}
+    override fun onInterrupt() {
+        Log.d(TAG, "onInterrupt")
+    }
+
     override fun onServiceConnected() {
         super.onServiceConnected()
         floatingMenu.onServiceConnected()
         IS_RUNNING = true
+        floatingMenu.toggleUI(false)
 
         remoteServer.mouseCursor = { x, y ->
             floatingMenu.moveCursor(x, y)
+            floatingMenu.handler.post {
+                floatingMenu.toggleUI(false)
+                timer.restart()
+            }
         }
 
         remoteServer.tapOn = { x, y ->
@@ -45,12 +55,20 @@ class TVHelperService : AccessibilityService() {
         }
 
         remoteServer.start()
+
+        floatingMenu.handler.post {
+            timer.start()
+            timer.doOnFinish {
+                floatingMenu.toggleUI(true)
+            }
+        }
     }
 
     override fun onDestroy() {
         super.onDestroy()
         IS_RUNNING = false
         remoteServer.stop()
+        Log.d(TAG, "onDestroy")
     }
 
     companion object {

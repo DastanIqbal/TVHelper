@@ -51,3 +51,21 @@ fun findNodeHelper(
     }
     return result
 }
+
+fun findScrollableNode(
+    root: AccessibilityNodeInfo,
+    scrollDirection: AccessibilityNodeInfo.AccessibilityAction
+): AccessibilityNodeInfo? {
+    val deque: ArrayDeque<AccessibilityNodeInfo> = ArrayDeque()
+    deque.add(root)
+    while (!deque.isEmpty()) {
+        val node = deque.removeFirst()
+        if (node.actionList.contains(scrollDirection)) {
+            return node
+        }
+        for (i in 0 until node.childCount) {
+            deque.addLast(node.getChild(i))
+        }
+    }
+    return null
+}

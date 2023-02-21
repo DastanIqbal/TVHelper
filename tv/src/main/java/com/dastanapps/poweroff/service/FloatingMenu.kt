@@ -29,8 +29,6 @@ class FloatingMenu(
 ) {
 
     private val context get() = service
-    private val handler = Handler(Looper.getMainLooper())
-
     private val density by lazy { context.resources.displayMetrics.density }
 
     private val boundaryXRight by lazy {
@@ -41,16 +39,31 @@ class FloatingMenu(
         context.resources.displayMetrics.heightPixels - cursorIcon?.height!!
     }
 
-
     private var mLayout: FrameLayout? = null
+
+
+    private var mCursorLayout: FrameLayout? = null
     private var cursorIcon: ImageView? = null
-    private var cursorLayout: WindowManager.LayoutParams? = null
     private val windowManager: WindowManager by lazy {
         context.getSystemService(AccessibilityService.WINDOW_SERVICE) as WindowManager
     }
-
     private val iconSize = 30
 
+    val handler = Handler(Looper.getMainLooper())
+
+
+    fun isCursorVisible() = cursorIcon?.visibility == View.VISIBLE
+    fun toggleUI(hide: Boolean) {
+        handler.post {
+            if (hide) {
+                mLayout?.visibility = View.INVISIBLE
+                cursorIcon?.visibility = View.INVISIBLE
+            } else {
+                mLayout?.visibility = View.VISIBLE
+                cursorIcon?.visibility = View.VISIBLE
+            }
+        }
+    }
 
     fun onServiceConnected() {
         mLayout = FrameLayout(context)
@@ -61,6 +74,10 @@ class FloatingMenu(
         )
 
         cursorIcon?.setImageResource(R.drawable.baseline_mouse_24)
+
+        mCursorLayout = FrameLayout(context).apply {
+            addView(cursorIcon)
+        }
 
         val lp = WindowManager.LayoutParams().apply {
             type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
@@ -73,7 +90,7 @@ class FloatingMenu(
 
         LayoutInflater.from(context).inflate(R.layout.layout_floating_menu, mLayout)
 
-        cursorLayout = WindowManager.LayoutParams().apply {
+        val cursorLayout = WindowManager.LayoutParams().apply {
             width = WindowManager.LayoutParams.MATCH_PARENT
             height = WindowManager.LayoutParams.MATCH_PARENT
             type = WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY
@@ -84,13 +101,7 @@ class FloatingMenu(
 
 
         windowManager.addView(mLayout, lp)
-
-        windowManager.addView(
-            FrameLayout(context).apply {
-                addView(cursorIcon)
-            },
-            cursorLayout
-        )
+        windowManager.addView(mCursorLayout, cursorLayout)
 
         configurePowerButton()
         configureHomeButton()
@@ -215,24 +226,6 @@ class FloatingMenu(
                 AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, AudioManager.FLAG_SHOW_UI
             )
         }
-    }
-
-    private fun findScrollableNode(
-        root: AccessibilityNodeInfo,
-        scrollDirection: AccessibilityNodeInfo.AccessibilityAction
-    ): AccessibilityNodeInfo? {
-        val deque: ArrayDeque<AccessibilityNodeInfo> = ArrayDeque()
-        deque.add(root)
-        while (!deque.isEmpty()) {
-            val node = deque.removeFirst()
-            if (node.actionList.contains(scrollDirection)) {
-                return node
-            }
-            for (i in 0 until node.childCount) {
-                deque.addLast(node.getChild(i))
-            }
-        }
-        return null
     }
 
     private fun configureScrollButton() {

@@ -25,15 +25,20 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
-    private val dataStream by lazy {
-        MainApp.INSTANCE.connectionManager.dataStream
-    }
+    private val dataStream get() = MainApp.INSTANCE.connectionManager.dataStream
 
     private val activityLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             if (it.resultCode == Activity.RESULT_CANCELED) {
-                if (!MainApp.INSTANCE.connectionManager.dataStream.isConnected) {
+                if (!dataStream.isConnected) {
                     finish()
+                }
+            } else if (it.resultCode == Activity.RESULT_OK) {
+                if (dataStream.isConnected) {
+                    binding.mousePad.setOnTouchListener(
+                        OnTouchListenerImpl(dataStream)
+                    )
+                    binding.dpadView.setOnDPadListener(DpadListenerImpl(dataStream))
                 }
             }
         }
@@ -41,14 +46,11 @@ class MainActivity : AppCompatActivity() {
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (!MainApp.INSTANCE.connectionManager.dataStream.isConnected) {
+        if (!dataStream.isConnected) {
             activityLauncher.launch(Intent(this, NoServerScreen::class.java))
         }
         binding = ActivityMainBinding.inflate(LayoutInflater.from(this))
         setContentView(binding.root)
-
-        binding.mousePad.setOnTouchListener(OnTouchListenerImpl(dataStream))
-        binding.dpadView.setOnDPadListener(DpadListenerImpl(dataStream))
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {

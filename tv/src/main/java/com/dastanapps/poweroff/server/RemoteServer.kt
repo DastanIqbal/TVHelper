@@ -97,9 +97,16 @@ class RemoteServer {
         val bytesRead = socketChannel.read(buffer)
         val data = buffer.array().sliceArray(0 until bytesRead)
         try {
+            if (bytesRead == -1){
+                println("Connection closed by ${socketChannel.remoteAddress}")
+                socketChannel.close()
+                key.cancel()
+                return
+            }
+
             val json = JSONObject(String(data))
 
-            if (bytesRead == -1 || json.get("type") == RemoteEvent.STOP_SERVER.name) {
+            if (json.get("type") == RemoteEvent.STOP_SERVER.name) {
                 println("Connection closed by ${socketChannel.remoteAddress}")
                 socketChannel.close()
                 key.cancel()

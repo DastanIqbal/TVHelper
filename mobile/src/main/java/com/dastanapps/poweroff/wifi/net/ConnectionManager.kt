@@ -13,9 +13,7 @@ class ConnectionManager {
         connectionStatus?.invoke(it)
     }
 
-    val dataStream by lazy {
-        connectPhoneTask.dataStream
-    }
+    val dataStream get() = connectPhoneTask.dataStream
 
     var connectionStatus: ((isConnect: Boolean) -> Unit)? = null
 
