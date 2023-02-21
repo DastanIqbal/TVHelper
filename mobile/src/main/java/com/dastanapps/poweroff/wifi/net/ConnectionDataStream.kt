@@ -1,12 +1,7 @@
 package com.dastanapps.poweroff.wifi.net
 
-import android.content.Context
 import android.util.Log
-import android.widget.Toast
 import com.dastanapps.poweroff.wifi.Constants
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.io.BufferedWriter
 import java.io.IOException
@@ -21,8 +16,7 @@ import java.net.Socket
  *
  */
 class ConnectionDataStream(
-    val context: Context,
-    private val scope: CoroutineScope
+    private val status: (isConnect: Boolean) -> Unit
 ) {
     private val TAG = ConnectPhoneTask::class.java.simpleName
 
@@ -46,11 +40,6 @@ class ConnectionDataStream(
 
     fun prepare(isInit: Boolean) {
         isConnected = isInit
-        Toast.makeText(
-            context,
-            if (isConnected) "Connected to server!" else "Error while connecting",
-            Toast.LENGTH_LONG
-        ).show()
         try {
             if (isConnected) {
                 out = PrintWriter(
@@ -59,12 +48,12 @@ class ConnectionDataStream(
                             socket?.getOutputStream()
                         )
                     ), true
-                ) //create output stream to send data to server
+                )
+                status.invoke(true)
             }
         } catch (e: IOException) {
             Log.e(TAG, "Error while creating OutWriter", e)
-            Toast.makeText(context, "Error while connecting", Toast.LENGTH_LONG)
-                .show()
+            status.invoke(false)
         }
     }
 
@@ -82,9 +71,7 @@ class ConnectionDataStream(
 
     fun sendCommands(cmd: String) {
         if (isStreamConnected) {
-            scope.launch(Dispatchers.IO) {
-                out?.println(cmd)
-            }
+            out?.println(cmd)
         }
     }
 

@@ -2,8 +2,6 @@ package com.dastanapps.poweroff.wifi.net
 
 import android.annotation.SuppressLint
 import android.os.AsyncTask
-import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.lifecycleScope
 
 /**
  *
@@ -13,12 +11,12 @@ import androidx.lifecycle.lifecycleScope
 
 @SuppressLint("StaticFieldLeak")
 class ConnectPhoneTask(
-    private val activity: FragmentActivity
+    private val status: (isConnect: Boolean) -> Unit
 ) : AsyncTask<String?, Void?, Boolean>() {
     private val TAG = ConnectPhoneTask::class.java.simpleName
 
     val dataStream by lazy {
-        ConnectionDataStream(context = activity, scope = activity.lifecycleScope)
+        ConnectionDataStream(status)
     }
 
     override fun doInBackground(vararg params: String?): Boolean {
