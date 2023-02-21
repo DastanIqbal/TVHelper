@@ -9,49 +9,51 @@
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintTop_toTopOf="parent">
 
-    <ImageView
+    <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/power"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="#22000000"
-        android:padding="16dp"
+        android:background="@drawable/button_selector"
+        android:padding="8dp"
         android:src="@drawable/baseline_power_settings_new_24" />
 
-    <ImageView
+    <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/home"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="#22000000"
-        android:padding="16dp"
+        android:background="@drawable/button_selector"
+        android:padding="8dp"
         android:src="@drawable/outline_home_24" />
 
-    <ImageView
+    <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/recent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="#22000000"
-        android:padding="16dp"
+        android:background="@drawable/button_selector"
+        android:padding="8dp"
         android:src="@drawable/outline_history_24" />
 
-    <ImageView
+    <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/back"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="#22000000"
-        android:padding="16dp"
+        android:background="@drawable/button_selector"
+        android:padding="8dp"
         android:src="@drawable/outline_arrow_back_24" />
 
-    <Button
-        android:id="@+id/volume_up"
-        android:layout_width="wrap_content"
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/volume"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Volume"
-        android:visibility="gone" />
+        android:background="@drawable/button_selector"
+        android:padding="8dp"
+        app:srcCompat="@drawable/outline_volume_up_24" />
 
     <Button
         android:id="@+id/scroll"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:background="@drawable/button_selector"
         android:text="Scroll"
         android:visibility="gone" />
 
@@ -59,6 +61,8 @@
         android:id="@+id/swipe"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:background="@drawable/button_selector"
         android:text="Swipe"
         android:visibility="gone" />
+
 </LinearLayout>

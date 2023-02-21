@@ -71,7 +71,7 @@ class FloatingMenu(
             gravity = Gravity.RIGHT
         }
 
-        LayoutInflater.from(context).inflate(R.layout.activity_main, mLayout)
+        LayoutInflater.from(context).inflate(R.layout.layout_floating_menu, mLayout)
 
         cursorLayout = WindowManager.LayoutParams().apply {
             width = WindowManager.LayoutParams.MATCH_PARENT
@@ -96,8 +96,8 @@ class FloatingMenu(
         configureHomeButton()
         configureRecentButton()
         configureBackButton()
-
         configureVolumeButton()
+
         configureScrollButton()
         configureSwipeButton()
 
@@ -207,7 +207,7 @@ class FloatingMenu(
     }
 
     private fun configureVolumeButton() {
-        val volumeUpButton = mLayout?.findViewById<View>(R.id.volume_up)
+        val volumeUpButton = mLayout?.findViewById<View>(R.id.volume)
         volumeUpButton?.setOnClickListener {
             val audioManager =
                 context.getSystemService(AccessibilityService.AUDIO_SERVICE) as AudioManager
