@@ -1,9 +1,11 @@
 package com.dastanapps.poweroff.wifi
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.dastanapps.poweroff.databinding.ActivityMainBinding
 import com.dastanapps.poweroff.ui.noserver.NoServerScreen
@@ -24,11 +26,20 @@ class MainActivity : AppCompatActivity() {
         MainApp.INSTANCE.connectionManager.dataStream
     }
 
+    private val activityLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            if (it.resultCode == Activity.RESULT_CANCELED) {
+                if (!MainApp.INSTANCE.connectionManager.dataStream.isConnected) {
+                    finish()
+                }
+            }
+        }
+
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (!MainApp.INSTANCE.connectionManager.dataStream.isConnected) {
-            startActivity(Intent(this, NoServerScreen::class.java))
+            activityLauncher.launch(Intent(this, NoServerScreen::class.java))
         }
         binding = ActivityMainBinding.inflate(LayoutInflater.from(this))
         setContentView(binding.root)

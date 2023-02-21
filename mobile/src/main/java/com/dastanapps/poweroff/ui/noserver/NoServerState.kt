@@ -10,13 +10,16 @@ import androidx.compose.runtime.mutableStateOf
  */
 
 data class NoServerState(
+    val savedServerIpState: MutableState<String> = mutableStateOf(""),
     val connectionStatus: MutableState<Boolean> = mutableStateOf(false),
     val progressStatus: MutableState<Boolean> = mutableStateOf(false),
     val scan: () -> Unit
 )
 
+data class ServerAddress(val ip: String, val port: Int, val isSaved: Boolean = false)
+
 data class ServerFoundState(
-    val servers: MutableState<ArrayList<Pair<String, Int>>>,
+    val servers: MutableState<ArrayList<ServerAddress>>,
     val connectionStatus: MutableState<Boolean> = mutableStateOf(false),
     val connect: (ip: String) -> Unit
 )

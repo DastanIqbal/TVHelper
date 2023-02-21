@@ -1,6 +1,8 @@
 package com.dastanapps.poweroff.ui.noserver
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -17,6 +19,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -28,6 +32,7 @@ import androidx.lifecycle.lifecycleScope
 import com.dastanapps.poweroff.ui.theme.AndroidTVAppsTheme
 import com.dastanapps.poweroff.wifi.Constants
 import com.dastanapps.poweroff.wifi.MainApp
+import com.dastanapps.poweroff.wifi.data.SAVED_IP
 import com.dastanapps.poweroff.wifi.net.scanPort
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -42,13 +47,28 @@ class NoServerScreen : ComponentActivity() {
 
     private val connectionStatus = mutableStateOf(false)
     private val progressStatus = mutableStateOf(false)
+    private val savedServerIp by lazy {
+        MainApp.INSTANCE.dataStoreManager.readString(SAVED_IP)
+    }
 
     private val serverState by lazy {
-        ServerFoundState(servers = mutableStateOf(arrayListOf()),
+        ServerFoundState(
+            servers = mutableStateOf(
+                arrayListOf()
+            ),
             connectionStatus = connectionStatus,
-            connect = {
-                MainApp.INSTANCE.connectionManager.connect(it) {
+            connect = { ip ->
+                MainApp.INSTANCE.connectionManager.connect(ip) {
                     connectionStatus.value = it
+                    if (it) {
+                        MainApp.INSTANCE.dataStoreManager.writeString(SAVED_IP, ip)
+                        Handler(Looper.getMainLooper())
+                            .postDelayed({
+                                if (!isFinishing) {
+                                    finish()
+                                }
+                            }, 1500)
+                    }
                 }
             })
     }
@@ -58,8 +78,7 @@ class NoServerScreen : ComponentActivity() {
         setContent {
             AndroidTVAppsTheme {
                 Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    color = Color.White
+                    modifier = Modifier.fillMaxWidth(), color = Color.White
                 ) {
                     Column(
                         modifier = Modifier
@@ -68,8 +87,11 @@ class NoServerScreen : ComponentActivity() {
                             .padding(top = 24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+                        val savedServerIp =
+                            savedServerIp.collectAsState(initial = "") as MutableState<String>
                         Header(
                             NoServerState(
+                                savedServerIpState = savedServerIp,
                                 connectionStatus = connectionStatus,
                                 progressStatus = progressStatus,
                                 scan = {
@@ -77,7 +99,8 @@ class NoServerScreen : ComponentActivity() {
                                         progressStatus.value = true
                                         val list = scanPort("192.168.1.", Constants.SERVER_PORT)
                                         serverState.servers.value =
-                                            list as ArrayList<Pair<String, Int>>
+                                            list.map { ServerAddress(it.first, it.second, false) }
+                                                .toMutableList() as ArrayList<ServerAddress>
                                         progressStatus.value = false
                                     }
                                 })
@@ -85,10 +108,23 @@ class NoServerScreen : ComponentActivity() {
                         if (progressStatus.value) {
                             Progress()
                         }
+                        addSavedIp(savedServerIp)
                         Servers(serverState)
                     }
                 }
             }
+        }
+    }
+
+    private fun addSavedIp(savedServerIp: MutableState<String>) {
+        if (savedServerIp.value.isNotEmpty()) {
+            serverState.servers.value = arrayListOf(
+                ServerAddress(
+                    savedServerIp.value,
+                    Constants.SERVER_PORT,
+                    true
+                )
+            )
         }
     }
 }
@@ -99,9 +135,7 @@ fun Progress() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         CircularProgressIndicator(
-            modifier = Modifier.padding(top = 16.dp),
-            color = Color.Red,
-            strokeWidth = 4.dp
+            modifier = Modifier.padding(top = 16.dp), color = Color.Red, strokeWidth = 4.dp
         )
     }
 }
@@ -111,14 +145,14 @@ fun Servers(serverState: ServerFoundState) {
     LazyColumn(content = {
         items(serverState.servers.value) {
             ServerItem(pair = it) {
-                serverState.connect(it.first)
+                serverState.connect(it)
             }
         }
     })
 }
 
 @Composable
-fun ServerItem(pair: Pair<String, Int>, connect: () -> Unit) {
+fun ServerItem(pair: ServerAddress, connect: (ip: String) -> Unit) {
     val buttonState = remember { mutableStateOf(true) }
     Row(
         modifier = Modifier
@@ -128,15 +162,17 @@ fun ServerItem(pair: Pair<String, Int>, connect: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "Found ${pair.first}"
-        )
-        Button(
-            enabled = buttonState.value,
-            onClick = {
-                buttonState.value = false
-                connect()
+            text =
+            if (pair.isSaved) {
+                "Saved ${pair.ip}"
+            } else {
+                "Found ${pair.ip}"
             }
-        ) {
+        )
+        Button(enabled = buttonState.value, onClick = {
+            buttonState.value = false
+            connect(pair.ip)
+        }) {
             Text(text = "Connect")
         }
     }
@@ -157,17 +193,16 @@ fun Header(state: NoServerState) {
             )
         } else {
             Text(
-                text = if (!state.progressStatus.value)
+                text =
+                if (state.savedServerIpState.value.isNotEmpty()) {
+                    "Server Address Found"
+                } else if (!state.progressStatus.value || state.savedServerIpState.value.isEmpty()) {
                     "No Server address saved"
-                else
-                    "Searching Servers ..."
+                } else "Searching Servers ..."
             )
-            Button(
-                enabled = !state.progressStatus.value,
-                onClick = {
-                    state.scan()
-                }
-            ) {
+            Button(enabled = !state.progressStatus.value, onClick = {
+                state.scan()
+            }) {
                 Text(text = "Scan")
             }
         }
