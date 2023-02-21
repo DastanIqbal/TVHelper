@@ -22,7 +22,7 @@ class ConnectionDataStream(
 ) {
     private val TAG = ConnectPhoneTask::class.java.simpleName
 
-    private var socket: Socket? = null
+    var socket: Socket? = null
     private var out: PrintWriter? = null
 
     var isConnected = false
@@ -30,9 +30,9 @@ class ConnectionDataStream(
     fun init(ip: String): Boolean {
         var result = true
         try {
+            destroy()
             val serverAddr = InetAddress.getByName(ip)
-            socket =
-                Socket(serverAddr, Constants.SERVER_PORT) //Open socket on server IP and port
+            socket = Socket(serverAddr, Constants.SERVER_PORT) //Open socket on server IP and port
         } catch (e: IOException) {
             Log.e(TAG, "Error while connecting", e)
             result = false
@@ -52,12 +52,16 @@ class ConnectionDataStream(
                     ), true
                 )
                 status.invoke(true)
+            } else {
+                status.invoke(false)
             }
         } catch (e: IOException) {
             Log.e(TAG, "Error while creating OutWriter", e)
             status.invoke(false)
         }
     }
+
+    val connectedHost = socket?.inetAddress?.hostAddress ?: ""
 
     val isStreamConnected get() = isConnected && out != null
 

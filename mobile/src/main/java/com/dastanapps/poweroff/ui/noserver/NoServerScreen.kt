@@ -3,6 +3,7 @@ package com.dastanapps.poweroff.ui.noserver
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -29,6 +30,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
+import com.dastanapps.poweroff.ui.UIState
 import com.dastanapps.poweroff.ui.theme.AndroidTVAppsTheme
 import com.dastanapps.poweroff.wifi.Constants
 import com.dastanapps.poweroff.wifi.MainApp
@@ -47,27 +49,31 @@ class NoServerScreen : ComponentActivity() {
 
     private val connectionStatus = mutableStateOf(false)
     private val progressStatus = mutableStateOf(false)
+    private val serverList = mutableStateOf(arrayListOf<ServerAddress>())
     private val savedServerIp by lazy {
         MainApp.INSTANCE.dataStoreManager.readString(SAVED_IP)
     }
 
     private val serverState by lazy {
         ServerFoundState(
-            servers = mutableStateOf(
-                arrayListOf()
-            ),
+            servers = serverList,
             connectionStatus = connectionStatus,
-            connect = { ip ->
-                MainApp.INSTANCE.connectionManager.connect(ip) {
+            connect = { serverAddress, buttonState ->
+                buttonState.value = UIState.LOADING
+                MainApp.INSTANCE.connectionManager.connect(serverAddress.ip) {
                     connectionStatus.value = it
                     if (it) {
-                        MainApp.INSTANCE.dataStoreManager.writeString(SAVED_IP, ip)
+                        buttonState.value = UIState.SUCCESS
+                        MainApp.INSTANCE.dataStoreManager.writeString(SAVED_IP, serverAddress.ip)
                         Handler(Looper.getMainLooper())
                             .postDelayed({
                                 if (!isFinishing) {
                                     finish()
                                 }
-                            }, 1500)
+                            }, 1000)
+                    } else {
+                        buttonState.value = UIState.ERROR
+                        Toast.makeText(this, "Connection Error", Toast.LENGTH_LONG).show()
                     }
                 }
             })
@@ -144,16 +150,22 @@ fun Progress() {
 fun Servers(serverState: ServerFoundState) {
     LazyColumn(content = {
         items(serverState.servers.value) {
-            ServerItem(pair = it) {
-                serverState.connect(it)
+            ServerItem(pair = it, serverState) { it, uiState ->
+                serverState.connect(it, uiState)
             }
         }
     })
 }
 
 @Composable
-fun ServerItem(pair: ServerAddress, connect: (ip: String) -> Unit) {
-    val buttonState = remember { mutableStateOf(true) }
+fun ServerItem(
+    pair: ServerAddress,
+    serverState: ServerFoundState,
+    connect: (ip: ServerAddress, buttonState: MutableState<UIState>) -> Unit
+) {
+//    val connectedAddressSame =
+//        pair.ip == MainApp.INSTANCE.connectionManager.dataStream.connectedHost || serverState.connectionStatus.value
+    val buttonState = remember { mutableStateOf(UIState.IDLE) }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -169,11 +181,18 @@ fun ServerItem(pair: ServerAddress, connect: (ip: String) -> Unit) {
                 "Found ${pair.ip}"
             }
         )
-        Button(enabled = buttonState.value, onClick = {
-            buttonState.value = false
-            connect(pair.ip)
-        }) {
-            Text(text = "Connect")
+        Button(
+            enabled = buttonState.value !in arrayOf(UIState.SUCCESS, UIState.LOADING),
+            onClick = {
+                connect(pair, buttonState)
+            }) {
+            Text(
+                text = if (buttonState.value == UIState.SUCCESS) {
+                    "Disconnect"
+                } else {
+                    "Connect"
+                }
+            )
         }
     }
 }

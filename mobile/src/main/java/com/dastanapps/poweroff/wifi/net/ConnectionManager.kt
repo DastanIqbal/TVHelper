@@ -9,10 +9,8 @@ package com.dastanapps.poweroff.wifi.net
 
 class ConnectionManager {
 
-    private val connectPhoneTask by lazy {
-        ConnectPhoneTask() {
-            connectionStatus?.invoke(it)
-        }
+    private var connectPhoneTask = ConnectPhoneTask() {
+        connectionStatus?.invoke(it)
     }
 
     val dataStream by lazy {
@@ -23,6 +21,9 @@ class ConnectionManager {
 
     fun connect(ip: String, connectionStatus: ((isConnect: Boolean) -> Unit)? = null) {
         this.connectionStatus = connectionStatus
+        connectPhoneTask = ConnectPhoneTask() {
+            connectionStatus?.invoke(it)
+        }
         connectPhoneTask.execute(ip)
     }
 

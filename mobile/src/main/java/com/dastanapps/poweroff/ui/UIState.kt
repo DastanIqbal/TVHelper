@@ -7,5 +7,5 @@ package com.dastanapps.poweroff.ui
  */
 
 enum class UIState {
-    SUCCESS, ERROR, LOADING
+    IDLE, SUCCESS, ERROR, LOADING
 }

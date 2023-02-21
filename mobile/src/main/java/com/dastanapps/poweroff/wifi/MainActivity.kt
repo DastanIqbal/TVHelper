@@ -5,8 +5,11 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuItem
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import com.dastanapps.poweroff.R
 import com.dastanapps.poweroff.databinding.ActivityMainBinding
 import com.dastanapps.poweroff.ui.noserver.NoServerScreen
 import com.dastanapps.poweroff.wifi.contracts.impl.DpadListenerImpl
@@ -46,5 +49,20 @@ class MainActivity : AppCompatActivity() {
 
         binding.mousePad.setOnTouchListener(OnTouchListenerImpl(dataStream))
         binding.dpadView.setOnDPadListener(DpadListenerImpl(dataStream))
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.action_setting -> {
+                activityLauncher.launch(Intent(this, NoServerScreen::class.java))
+                return true
+            }
+        }
+        return super.onOptionsItemSelected(item)
     }
 }

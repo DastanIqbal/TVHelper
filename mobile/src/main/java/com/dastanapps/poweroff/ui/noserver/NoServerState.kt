@@ -2,6 +2,7 @@ package com.dastanapps.poweroff.ui.noserver
 
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import com.dastanapps.poweroff.ui.UIState
 
 /**
  *
@@ -21,5 +22,5 @@ data class ServerAddress(val ip: String, val port: Int, val isSaved: Boolean = f
 data class ServerFoundState(
     val servers: MutableState<ArrayList<ServerAddress>>,
     val connectionStatus: MutableState<Boolean> = mutableStateOf(false),
-    val connect: (ip: String) -> Unit
+    val connect: (server: ServerAddress, buttonState: MutableState<UIState>) -> Unit
 )
