@@ -2,6 +2,8 @@ package com.dastanapps.poweroff.wifi.net
 
 import android.util.Log
 import com.dastanapps.poweroff.wifi.Constants
+import com.dastanapps.poweroff.wifi.MainApp
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.io.BufferedWriter
 import java.io.IOException
@@ -70,8 +72,10 @@ class ConnectionDataStream(
     }
 
     fun sendCommands(cmd: String) {
-        if (isStreamConnected) {
-            out?.println(cmd)
+        MainApp.applicationIoScope.launch {
+            if (isStreamConnected) {
+                out?.println(cmd)
+            }
         }
     }
 
