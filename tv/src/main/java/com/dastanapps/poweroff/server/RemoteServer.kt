@@ -41,18 +41,37 @@ class RemoteServer {
         thread?.interrupt()
     }
 
+    var serverSocketChannel: ServerSocketChannel? = null
+    var selector: Selector? = null
     private fun server() {
         val port = 8585 // Change this to your desired port number
 
-        val serverSocket = ServerSocketChannel.open()
+        if (serverSocketChannel == null || serverSocketChannel?.isOpen == false)
+            serverSocketChannel = ServerSocketChannel.open()
+
+        var serverSocket = serverSocketChannel!!
+        if (serverSocket.socket().isBound) {
+            serverSocket.socket().close()
+            serverSocketChannel = ServerSocketChannel.open()
+            serverSocket = serverSocketChannel!!
+        }
+
         serverSocket.socket().bind(InetSocketAddress(port))
+        serverSocket.socket().reuseAddress = true
+        serverSocket.socket().soTimeout = 0
         serverSocket.configureBlocking(false)
 
         println("Server started on IPv4 ${getSystemIP()} Port $port")
 
-        val selector = Selector.open()
+        selector = if (selector == null || selector?.isOpen == false)
+            Selector.open()
+        else {
+            selector?.close()
+            Selector.open()
+        }
         serverSocket.register(selector, SelectionKey.OP_ACCEPT)
 
+        val selector = selector!!
         thread = Thread {
             while (isRunning) {
                 selector.select()
@@ -92,22 +111,24 @@ class RemoteServer {
     }
 
     private fun readData(key: SelectionKey) {
-        val socketChannel = key.channel() as SocketChannel
-        val buffer = ByteBuffer.allocate(1024)
-        val bytesRead = socketChannel.read(buffer)
-        val data = buffer.array().sliceArray(0 until bytesRead)
+        var restart = true
         try {
-            if (bytesRead == -1){
+            val socketChannel = key.channel() as SocketChannel
+            val buffer = ByteBuffer.allocate(1024)
+            val bytesRead = socketChannel.read(buffer)
+            val data = buffer.array().sliceArray(0 until bytesRead)
+            if (bytesRead == -1) {
                 println("Connection closed by ${socketChannel.remoteAddress}")
                 socketChannel.close()
                 key.cancel()
-                return
+                throw InterruptedException()
             }
 
             val json = JSONObject(String(data))
 
             if (json.get("type") == RemoteEvent.STOP_SERVER.name) {
-                println("Connection closed by ${socketChannel.remoteAddress}")
+                restart = false
+                println("Connection closed by ${socketChannel.remoteAddress} Stop Server")
                 socketChannel.close()
                 key.cancel()
                 return
@@ -118,6 +139,8 @@ class RemoteServer {
             process(json)
         } catch (e: Exception) {
             e.printStackTrace()
+            if (restart)
+                start()
         }
     }
 
