@@ -1,8 +1,10 @@
-package com.dastanapps.poweroff.utils
+package com.dastanapps.poweroff.common.utils
 
 import android.content.Context
+import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.provider.Settings
 import android.util.Log
 import androidx.annotation.RequiresPermission
 
@@ -43,10 +45,17 @@ fun internetConnectionStatus(context: Context): InternetConnection {
     return InternetConnection(isWifi = isWifi, isMobile = isMobile)
 }
 
+@RequiresPermission(value = "android.permission.ACCESS_NETWORK_STATE")
 fun isConnectedToWifi(context: Context): Boolean {
     return internetConnectionStatus(context = context).isWifi
 }
 
+@RequiresPermission(value = "android.permission.ACCESS_NETWORK_STATE")
 fun isConnectedToMobile(context: Context): Boolean {
     return internetConnectionStatus(context = context).isMobile
+}
+
+fun openWifiSettings(context: Context) {
+    val intent = Intent(Settings.ACTION_WIFI_SETTINGS)
+    context.startActivity(intent)
 }

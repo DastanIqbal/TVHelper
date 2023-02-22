@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">TV Helper Mobile</string>
+    <string name="title_activity_no_wifi">NoWifiActivity</string>
 </resources>

@@ -16,6 +16,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AndroidTVApps">
         <activity
+            android:name=".ui.nointernet.NoWifiActivity"
+            android:exported="false"
+            android:label="@string/title_activity_no_wifi"
+            android:theme="@style/Theme.AndroidTVApps" />
+        <activity
             android:name=".wifi.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.AndroidTVApps">

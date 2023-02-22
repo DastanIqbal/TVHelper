@@ -1,5 +1,7 @@
 package com.dastanapps.poweroff.ui.nointernet
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,8 +12,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -19,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.SecureFlagPolicy
+import com.dastanapps.poweroff.common.utils.openWifiSettings
 import com.dastanapps.poweroff.ui.theme.AndroidTVAppsTheme
 
 /**
@@ -30,15 +35,17 @@ import com.dastanapps.poweroff.ui.theme.AndroidTVAppsTheme
 
 @Composable
 fun NoWifiDialog(
+    wifiUIState: NoWifiUIState,
     dismiss: () -> Unit
 ) {
-    val openDialog = remember { mutableStateOf(true) }
+    val context = LocalContext.current
 
-    if (!openDialog.value) return
+    if (!wifiUIState.wifiState.value) return
 
     AndroidTVAppsTheme {
         Surface(
-            modifier = Modifier.fillMaxWidth(), color = Color.White
+            modifier = Modifier.fillMaxWidth(),
+            color = Color.White
         ) {
             AlertDialog(
                 modifier = Modifier.padding(16.dp),
@@ -65,14 +72,36 @@ fun NoWifiDialog(
                     )
                 },
                 onDismissRequest = {
-                    openDialog.value = false
+                    wifiUIState.wifiState.value = false
                 },
                 confirmButton = {
-                    Button(onClick = {
-                        openDialog.value = false
-                        dismiss.invoke()
-                    }) {
-                        Text(text = "Ok")
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                        verticalArrangement = Arrangement.SpaceEvenly,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+
+                        Button(
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = {
+                                wifiUIState.wifiState.value = false
+                                openWifiSettings(context = context)
+                            }
+                        ) {
+                            Text(text = "Open Wifi Setting")
+                        }
+
+                        Button(
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = {
+                                wifiUIState.wifiState.value = false
+                                dismiss.invoke()
+                            }
+                        ) {
+                            Text(text = "Ok")
+                        }
                     }
                 },
                 containerColor = Color.White,
@@ -91,7 +120,11 @@ fun NoWifiDialog(
 @Preview
 @Composable
 fun NoWifiDialogPreview() {
-    NoWifiDialog {
-
-    }
+    NoWifiDialog(
+        NoWifiUIState(
+            wifiState = remember {
+                mutableStateOf(true)
+            }
+        )
+    ) {}
 }
