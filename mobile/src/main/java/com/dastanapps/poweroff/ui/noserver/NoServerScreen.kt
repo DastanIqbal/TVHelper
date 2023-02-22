@@ -36,6 +36,7 @@ import com.dastanapps.poweroff.ui.theme.AndroidTVAppsTheme
 import com.dastanapps.poweroff.wifi.Constants
 import com.dastanapps.poweroff.wifi.MainApp
 import com.dastanapps.poweroff.wifi.data.SAVED_IP
+import com.dastanapps.poweroff.wifi.net.findNetworkSubnet
 import com.dastanapps.poweroff.wifi.net.scanPort
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -54,6 +55,7 @@ class NoServerScreen : ComponentActivity() {
     private val savedServerIp by lazy {
         MainApp.INSTANCE.dataStoreManager.readString(SAVED_IP)
     }
+    private val ipAddressPrefix by lazy { findNetworkSubnet().ipAddressPrefix }
 
     private val serverState by lazy {
         ServerFoundState(
@@ -105,7 +107,7 @@ class NoServerScreen : ComponentActivity() {
                                 scan = {
                                     this@NoServerScreen.lifecycleScope.launch(Dispatchers.IO) {
                                         progressStatus.value = true
-                                        val list = scanPort("192.168.1.", Constants.SERVER_PORT)
+                                        val list = scanPort(ipAddressPrefix, Constants.SERVER_PORT)
                                         serverState.servers.value =
                                             list.map { ServerAddress(it.first, it.second, false) }
                                                 .toMutableList() as ArrayList<ServerAddress>
