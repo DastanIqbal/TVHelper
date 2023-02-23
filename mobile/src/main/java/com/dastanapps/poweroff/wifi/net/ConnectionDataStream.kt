@@ -1,12 +1,13 @@
 package com.dastanapps.poweroff.wifi.net
 
 import android.util.Log
+import com.dastanapps.poweroff.common.utils.tryCatch
+import com.dastanapps.poweroff.common.utils.tryCatchIgnore
 import com.dastanapps.poweroff.wifi.Constants
 import com.dastanapps.poweroff.wifi.MainApp
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.io.BufferedWriter
-import java.io.IOException
 import java.io.OutputStreamWriter
 import java.io.PrintWriter
 import java.net.InetAddress
@@ -29,12 +30,12 @@ class ConnectionDataStream(
 
     fun init(ip: String): Boolean {
         var result = true
-        try {
+        tryCatch({
             destroy()
             val serverAddr = InetAddress.getByName(ip)
             socket = Socket(serverAddr, Constants.SERVER_PORT) //Open socket on server IP and port
-        } catch (e: IOException) {
-            Log.e(TAG, "Error while connecting", e)
+        }) {
+            Log.e(TAG, "Error while connecting", it)
             result = false
         }
         return result
@@ -42,7 +43,7 @@ class ConnectionDataStream(
 
     fun prepare(isInit: Boolean) {
         isConnected = isInit
-        try {
+        tryCatch({
             if (isConnected) {
                 out = PrintWriter(
                     BufferedWriter(
@@ -55,8 +56,8 @@ class ConnectionDataStream(
             } else {
                 status.invoke(false)
             }
-        } catch (e: IOException) {
-            Log.e(TAG, "Error while creating OutWriter", e)
+        }) {
+            Log.e(TAG, "Error while creating OutWriter", it)
             status.invoke(false)
         }
     }
@@ -67,10 +68,8 @@ class ConnectionDataStream(
 
     fun destroy() {
         if (isStreamConnected) {
-            try {
+            tryCatchIgnore {
                 socket?.close() //close socket
-            } catch (e: IOException) {
-                Log.e(TAG, "Error in closing socket", e)
             }
         }
     }

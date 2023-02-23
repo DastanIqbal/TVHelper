@@ -117,7 +117,7 @@ fun scanIpPort(host: String, port: Int): Pair<String, Int>? {
 fun scanPort(subnet: String = "192.168.1.", port: Int): List<Pair<String, Int>> {
     val list = ArrayList<Pair<String, Int>>()
     val subnet = subnet
-    for (i in 0..254) {
+    for (i in 0..25) {
         val host = subnet + i
         Log.d(TAG, "Scanning Ip: $host Port: $port")
         val result = scanIpPort(host, port)

@@ -121,7 +121,7 @@ class RemoteServer {
                 println("Connection closed by ${socketChannel.remoteAddress}")
                 socketChannel.close()
                 key.cancel()
-                throw InterruptedException()
+                return
             }
 
             val json = JSONObject(String(data))
