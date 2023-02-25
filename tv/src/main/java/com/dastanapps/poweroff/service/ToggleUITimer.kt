@@ -1,7 +1,7 @@
 package com.dastanapps.poweroff.service
 
 import android.os.CountDownTimer
-import android.util.Log
+import com.dastanapps.poweroff.MainApp.Companion.log
 
 /**
  *
@@ -21,12 +21,12 @@ class ToggleUITimer {
     fun start() {
         countDownTimer = object : CountDownTimer(finishTimerMillis, 1000) {
             override fun onTick(millisUntilFinished: Long) {
-                Log.d(TAG, "seconds remaining: " + millisUntilFinished / 1000)
+                log("seconds remaining: " + millisUntilFinished / 1000)
                 onTick?.invoke(millisUntilFinished)
             }
 
             override fun onFinish() {
-                Log.d(TAG, "Finish")
+                log("Finish")
                 onFinish?.invoke()
             }
         }

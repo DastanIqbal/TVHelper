@@ -1,5 +1,6 @@
 package com.dastanapps.poweroff.utils
 
+import com.dastanapps.poweroff.MainApp.Companion.log
 import java.net.Inet4Address
 import java.net.InetAddress
 import java.net.NetworkInterface
@@ -35,7 +36,7 @@ object NetworkUtils {
             }
             sysIP
         } catch (E: Exception) {
-            System.err.println("System IP Exp : " + E.message)
+            log("System IP Exp : " + E.message)
             null
         }
     }
@@ -61,7 +62,7 @@ object NetworkUtils {
             }
             ip
         } catch (E: Exception) {
-            System.err.println("System Linux IP Exp : " + E.message)
+            log("System Linux IP Exp : " + E.message)
             null
         }
     }

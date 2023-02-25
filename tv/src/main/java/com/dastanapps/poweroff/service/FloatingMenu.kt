@@ -15,6 +15,7 @@ import android.view.WindowManager
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.FrameLayout
 import android.widget.ImageView
+import com.dastanapps.poweroff.MainApp.Companion.log
 import com.dastanapps.poweroff.R
 import com.dastanapps.poweroff.common.RemoteEvent
 
@@ -112,7 +113,7 @@ class FloatingMenu(
         configureScrollButton()
         configureSwipeButton()
 
-        TVHelperService.IS_RUNNING = true
+        TVHelperService.IS_SERVICE_RUNNING = true
     }
 
     fun moveCursor(x: Double, y: Double) {
@@ -137,12 +138,12 @@ class FloatingMenu(
     private val callback = object : AccessibilityService.GestureResultCallback() {
         override fun onCancelled(gestureDescription: GestureDescription?) {
             super.onCancelled(gestureDescription)
-            println("gesture cancelled");
+            log("gesture cancelled");
         }
 
         override fun onCompleted(gestureDescription: GestureDescription?) {
             super.onCompleted(gestureDescription)
-            println("gesture completed");
+            log("gesture completed");
         }
     };
 

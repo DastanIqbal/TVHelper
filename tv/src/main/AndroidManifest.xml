@@ -12,6 +12,7 @@
         android:required="true" />
 
     <application
+        android:name=".MainApp"
         android:allowBackup="true"
         android:banner="@drawable/ic_launcher_foreground"
         android:dataExtractionRules="@xml/data_extraction_rules"

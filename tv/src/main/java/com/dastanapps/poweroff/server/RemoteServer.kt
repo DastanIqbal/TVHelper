@@ -1,7 +1,9 @@
 package com.dastanapps.poweroff.server
 
+import com.dastanapps.poweroff.MainApp.Companion.log
 import com.dastanapps.poweroff.common.RemoteEvent
 import com.dastanapps.poweroff.utils.NetworkUtils.getSystemIP
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import org.json.JSONObject
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
@@ -23,7 +25,6 @@ fun main(args: Array<String>) {
 
 class RemoteServer {
 
-    private var isRunning = false
     private var thread: Thread? = null
 
     var mouseCursor: ((x: Double, y: Double) -> Unit)? = null
@@ -31,13 +32,13 @@ class RemoteServer {
     var scroll: ((type: String) -> Unit)? = null
 
     fun start() {
-        isRunning = true
+        IS_SERVER_RUNNING = true
         server()
         thread?.start()
     }
 
     fun stop() {
-        isRunning = false
+        IS_SERVER_RUNNING = false
         thread?.interrupt()
     }
 
@@ -61,7 +62,7 @@ class RemoteServer {
         serverSocket.socket().soTimeout = 0
         serverSocket.configureBlocking(false)
 
-        println("Server started on IPv4 ${getSystemIP()} Port $port")
+        log("Server started on IPv4 ${getSystemIP()} Port $port")
 
         selector = if (selector == null || selector?.isOpen == false)
             Selector.open()
@@ -73,7 +74,7 @@ class RemoteServer {
 
         val selector = selector!!
         thread = Thread {
-            while (isRunning) {
+            while (IS_SERVER_RUNNING) {
                 selector.select()
                 val selectedKeys = selector.selectedKeys().iterator()
 
@@ -105,7 +106,7 @@ class RemoteServer {
         val socketChannel = serverSocket.accept()
         socketChannel.configureBlocking(false)
 
-        println("Accepted connection from ${socketChannel.remoteAddress}")
+        log("Accepted connection from ${socketChannel.remoteAddress}")
 
         socketChannel.register(key.selector(), SelectionKey.OP_READ)
     }
@@ -118,7 +119,7 @@ class RemoteServer {
             val bytesRead = socketChannel.read(buffer)
             val data = buffer.array().sliceArray(0 until bytesRead)
             if (bytesRead == -1) {
-                println("Connection closed by ${socketChannel.remoteAddress}")
+                log("Connection closed by ${socketChannel.remoteAddress}")
                 socketChannel.close()
                 key.cancel()
                 return
@@ -128,17 +129,18 @@ class RemoteServer {
 
             if (json.get("type") == RemoteEvent.STOP_SERVER.name) {
                 restart = false
-                println("Connection closed by ${socketChannel.remoteAddress} Stop Server")
+                log("Connection closed by ${socketChannel.remoteAddress} Stop Server")
                 socketChannel.close()
                 key.cancel()
                 return
             }
 
-            println("Received data: ${String(data)}")
+            log("Received data: ${String(data)}")
 
             process(json)
         } catch (e: Exception) {
             e.printStackTrace()
+            FirebaseCrashlytics.getInstance().recordException(e)
             if (restart)
                 start()
         }
@@ -167,6 +169,10 @@ class RemoteServer {
                 scroll?.invoke(type)
             }
         }
+    }
+
+    companion object {
+        var IS_SERVER_RUNNING = false
     }
 
 }

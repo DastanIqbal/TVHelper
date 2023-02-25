@@ -1,8 +1,8 @@
 package com.dastanapps.poweroff.service
 
 import android.accessibilityservice.AccessibilityService
-import android.util.Log
 import android.view.accessibility.AccessibilityEvent
+import com.dastanapps.poweroff.MainApp.Companion.log
 import com.dastanapps.poweroff.server.RemoteServer
 
 
@@ -25,17 +25,17 @@ class TVHelperService : AccessibilityService() {
     private val timer by lazy { ToggleUITimer() }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
-        Log.d(TAG, event.toString())
+        log(event.toString())
     }
 
     override fun onInterrupt() {
-        Log.d(TAG, "onInterrupt")
+        log("onInterrupt")
     }
 
     override fun onServiceConnected() {
         super.onServiceConnected()
         floatingMenu.onServiceConnected()
-        IS_RUNNING = true
+        IS_SERVICE_RUNNING = true
         floatingMenu.toggleUI(false)
 
         remoteServer.mouseCursor = { x, y ->
@@ -66,12 +66,12 @@ class TVHelperService : AccessibilityService() {
 
     override fun onDestroy() {
         super.onDestroy()
-        IS_RUNNING = false
+        IS_SERVICE_RUNNING = false
         remoteServer.stop()
-        Log.d(TAG, "onDestroy")
+        log("onDestroy")
     }
 
     companion object {
-        var IS_RUNNING = false
+        var IS_SERVICE_RUNNING = false
     }
 }
