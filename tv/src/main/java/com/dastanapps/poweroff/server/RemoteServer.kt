@@ -3,8 +3,10 @@ package com.dastanapps.poweroff.server
 import com.dastanapps.poweroff.MainApp
 import com.dastanapps.poweroff.MainApp.Companion.log
 import com.dastanapps.poweroff.common.RemoteEvent
+import com.dastanapps.poweroff.common.utils.deviceIP
+import com.dastanapps.poweroff.common.utils.toast
+import com.dastanapps.poweroff.common.utils.tryCatchIgnore
 import com.dastanapps.poweroff.service.SharedChannel
-import com.dastanapps.poweroff.utils.NetworkUtils.getSystemIP
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import kotlinx.coroutines.launch
 import org.json.JSONObject
@@ -71,7 +73,7 @@ class RemoteServer {
         serverSocket.socket().soTimeout = 0
         serverSocket.configureBlocking(false)
 
-        log("Server started on IPv4 ${getSystemIP()} Port $port")
+        log("Server started on IPv4 ${deviceIP()} Port $port")
 
         selector = if (selector == null || selector?.isOpen == false)
             Selector.open()
@@ -83,8 +85,7 @@ class RemoteServer {
 
         val selector = selector!!
         thread = Thread {
-            while (IS_SERVER_RUNNING) {
-                selector.select()
+            while (IS_SERVER_RUNNING && selector.select() > 0) {
                 val selectedKeys = selector.selectedKeys().iterator()
 
                 while (selectedKeys.hasNext()) {
@@ -116,6 +117,9 @@ class RemoteServer {
         socketChannel.configureBlocking(false)
 
         log("Accepted connection from ${socketChannel.remoteAddress}")
+        MainApp.mainScope.launch {
+            MainApp.INSTANCE?.toast("New Client connected ${(socketChannel.remoteAddress as InetSocketAddress).address.hostAddress}")
+        }
 
         socketChannel.register(key.selector(), SelectionKey.OP_READ)
     }
@@ -129,6 +133,11 @@ class RemoteServer {
             val data = buffer.array().sliceArray(0 until bytesRead)
             if (bytesRead == -1) {
                 log("Connection closed by ${socketChannel.remoteAddress}")
+
+                MainApp.mainScope.launch {
+                    MainApp.INSTANCE?.toast("Client ${(socketChannel.remoteAddress as InetSocketAddress).address.hostAddress} disconnected")
+                }
+
                 socketChannel.close()
                 key.cancel()
                 return
@@ -149,7 +158,7 @@ class RemoteServer {
             process(json)
         } catch (e: Exception) {
             e.printStackTrace()
-            FirebaseCrashlytics.getInstance().recordException(e)
+            tryCatchIgnore { FirebaseCrashlytics.getInstance().recordException(e) }
             if (restart)
                 start()
         }

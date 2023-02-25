@@ -31,12 +31,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
+import com.dastanapps.poweroff.common.utils.findNetworkInfo
 import com.dastanapps.poweroff.ui.UIState
 import com.dastanapps.poweroff.ui.theme.AndroidTVAppsTheme
 import com.dastanapps.poweroff.wifi.Constants
 import com.dastanapps.poweroff.wifi.MainApp
 import com.dastanapps.poweroff.wifi.data.SAVED_IP
-import com.dastanapps.poweroff.wifi.net.findNetworkSubnet
 import com.dastanapps.poweroff.wifi.net.scanPort
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -55,7 +55,7 @@ class NoServerScreen : ComponentActivity() {
     private val savedServerIp by lazy {
         MainApp.INSTANCE.dataStoreManager.readString(SAVED_IP)
     }
-    private val ipAddressPrefix by lazy { findNetworkSubnet().ipAddressPrefix }
+    private val ipAddressPrefix by lazy { findNetworkInfo(this).ipAddressPrefix }
 
     private val serverState by lazy {
         ServerFoundState(

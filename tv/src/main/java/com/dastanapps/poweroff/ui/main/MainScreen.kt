@@ -18,10 +18,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.dastanapps.poweroff.common.utils.deviceIP
 import com.dastanapps.poweroff.ui.main.models.HelperState
 import com.dastanapps.poweroff.ui.main.models.ServerState
 
@@ -111,6 +114,10 @@ fun AccessibilityScreen(state: HelperState) {
 
 @Composable
 fun ServerScreen(state: ServerState) {
+    val context = LocalContext.current
+    val currentIpAddress by lazy {
+        deviceIP().ifEmpty { "-.-.-.-" }
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -125,6 +132,14 @@ fun ServerScreen(state: ServerState) {
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center
         )
+        Text(
+            text = currentIpAddress,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center
+        )
+
         if (state.runningState.value) {
             Row(
                 modifier = Modifier

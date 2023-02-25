@@ -3,6 +3,7 @@ package com.dastanapps.poweroff.wifi
 import android.app.Application
 import android.content.IntentFilter
 import android.net.wifi.WifiManager
+import com.dastanapps.poweroff.common.crash.BugLog
 import com.dastanapps.poweroff.ui.nointernet.NoWifiReceiver
 import com.dastanapps.poweroff.wifi.data.DataStoreManager
 import com.dastanapps.poweroff.wifi.net.ConnectionManager
@@ -27,6 +28,7 @@ class MainApp : Application() {
     override fun onCreate() {
         super.onCreate()
         INSTANCE = this
+        BugLog.getInstance().start(this)
 
         registerReceiver(
             noWifiReceiver,
