@@ -118,7 +118,7 @@ class RemoteServer {
 
         log("Accepted connection from ${socketChannel.remoteAddress}")
         MainApp.mainScope.launch {
-            MainApp.INSTANCE?.toast("New Client connected ${(socketChannel.remoteAddress as InetSocketAddress).address.hostAddress}")
+            MainApp.INSTANCE?.toast("Client connected ${(socketChannel.remoteAddress as InetSocketAddress).address.hostAddress}")
         }
 
         socketChannel.register(key.selector(), SelectionKey.OP_READ)
@@ -147,7 +147,7 @@ class RemoteServer {
 
             if (json.get("type") == RemoteEvent.STOP_SERVER.name) {
                 restart = false
-                log("Connection closed by ${socketChannel.remoteAddress} Stop Server")
+                log("Connection closed by ${socketChannel.remoteAddress} Client")
                 socketChannel.close()
                 key.cancel()
                 return

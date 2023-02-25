@@ -56,28 +56,37 @@ class NoServerScreen : ComponentActivity() {
         MainApp.INSTANCE.dataStoreManager.readString(SAVED_IP)
     }
     private val ipAddressPrefix by lazy { findNetworkInfo(this).ipAddressPrefix }
+    private val dataStream get() = MainApp.INSTANCE.connectionManager.dataStream
 
     private val serverState by lazy {
         ServerFoundState(
             servers = serverList,
             connectionStatus = connectionStatus,
             connect = { serverAddress, buttonState ->
-                buttonState.value = UIState.LOADING
-                MainApp.INSTANCE.connectionManager.connect(serverAddress.ip) {
-                    connectionStatus.value = it
-                    if (it) {
-                        buttonState.value = UIState.SUCCESS
-                        MainApp.INSTANCE.dataStoreManager.writeString(SAVED_IP, serverAddress.ip)
-                        Handler(Looper.getMainLooper())
-                            .postDelayed({
-                                if (!isFinishing) {
-                                    setResult(Activity.RESULT_OK)
-                                    finish()
-                                }
-                            }, 1000)
-                    } else {
-                        buttonState.value = UIState.ERROR
-                        Toast.makeText(this, "Connection Error", Toast.LENGTH_LONG).show()
+                if (buttonState.value == UIState.SUCCESS) {
+                    MainApp.INSTANCE.connectionManager.dataStream.destroy()
+                    buttonState.value = UIState.IDLE
+                } else {
+                    buttonState.value = UIState.LOADING
+                    MainApp.INSTANCE.connectionManager.connect(serverAddress.ip) {
+                        connectionStatus.value = it
+                        if (it) {
+                            buttonState.value = UIState.SUCCESS
+                            MainApp.INSTANCE.dataStoreManager.writeString(
+                                SAVED_IP,
+                                serverAddress.ip
+                            )
+                            Handler(Looper.getMainLooper())
+                                .postDelayed({
+                                    if (!isFinishing) {
+                                        setResult(Activity.RESULT_OK)
+                                        finish()
+                                    }
+                                }, 1000)
+                        } else {
+                            buttonState.value = UIState.ERROR
+                            Toast.makeText(this, "Connection Error", Toast.LENGTH_LONG).show()
+                        }
                     }
                 }
             })
@@ -85,11 +94,15 @@ class NoServerScreen : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        connectionStatus.value = dataStream.isConnected
         setContent {
             AndroidTVAppsTheme {
                 Surface(
                     modifier = Modifier.fillMaxWidth(), color = Color.White
                 ) {
+                    val savedServerIp =
+                        savedServerIp.collectAsState(initial = "") as MutableState<String>
+
                     Column(
                         modifier = Modifier
                             .background(Color.White)
@@ -97,9 +110,7 @@ class NoServerScreen : ComponentActivity() {
                             .padding(top = 24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        val savedServerIp =
-                            savedServerIp.collectAsState(initial = "") as MutableState<String>
-                        Header(
+                        ScanServer(
                             NoServerState(
                                 savedServerIpState = savedServerIp,
                                 connectionStatus = connectionStatus,
@@ -115,6 +126,7 @@ class NoServerScreen : ComponentActivity() {
                                     }
                                 })
                         )
+                        SavedServer(serverState, savedServerIp)
                         if (progressStatus.value) {
                             Progress()
                         }
@@ -127,79 +139,9 @@ class NoServerScreen : ComponentActivity() {
 }
 
 @Composable
-fun Progress() {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        CircularProgressIndicator(
-            modifier = Modifier.padding(top = 16.dp), color = Color.Red, strokeWidth = 4.dp
-        )
-    }
-}
-
-@Composable
-fun Servers(serverState: ServerFoundState, savedServerIp: MutableState<String>) {
-    if (savedServerIp.value.isNotEmpty()) {
-        val serverAddress = ServerAddress(
-            savedServerIp.value,
-            Constants.SERVER_PORT,
-            true
-        )
-        ServerItem(pair = serverAddress, serverState) { item, uiState ->
-            serverState.connect(item, uiState)
-        }
-    }
-    LazyColumn(content = {
-        itemsIndexed(serverState.servers.value) { index, it ->
-            ServerItem(pair = it, serverState) { item, uiState ->
-                serverState.connect(item, uiState)
-            }
-        }
-    })
-}
-
-@Composable
-fun ServerItem(
-    pair: ServerAddress,
-    serverState: ServerFoundState,
-    connect: (ip: ServerAddress, buttonState: MutableState<UIState>) -> Unit
+fun ScanServer(
+    state: NoServerState
 ) {
-//    val connectedAddressSame =
-//        pair.ip == MainApp.INSTANCE.connectionManager.dataStream.connectedHost || serverState.connectionStatus.value
-    val buttonState = remember { mutableStateOf(UIState.IDLE) }
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text =
-            if (pair.isSaved) {
-                "Saved ${pair.ip}"
-            } else {
-                "Found ${pair.ip}"
-            }
-        )
-        Button(
-            enabled = buttonState.value !in arrayOf(UIState.SUCCESS, UIState.LOADING),
-            onClick = {
-                connect(pair, buttonState)
-            }) {
-            Text(
-                text = if (buttonState.value == UIState.SUCCESS) {
-                    "Disconnect"
-                } else {
-                    "Connect"
-                }
-            )
-        }
-    }
-}
-
-@Composable
-fun Header(state: NoServerState) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -229,8 +171,92 @@ fun Header(state: NoServerState) {
     }
 }
 
+
+@Composable
+fun Progress() {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        CircularProgressIndicator(
+            modifier = Modifier.padding(top = 16.dp), color = Color.Red, strokeWidth = 4.dp
+        )
+    }
+}
+
+@Composable
+fun SavedServer(serverState: ServerFoundState, savedServerIp: MutableState<String>) {
+    if (savedServerIp.value.isNotEmpty()) {
+        val serverAddress = ServerAddress(
+            savedServerIp.value,
+            Constants.SERVER_PORT,
+            true
+        )
+        ServerItem(pair = serverAddress, serverState) { item, uiState ->
+            serverState.connect(item, uiState)
+        }
+    }
+}
+
+@Composable
+fun Servers(serverState: ServerFoundState, savedServerIp: MutableState<String>) {
+    LazyColumn(content = {
+        itemsIndexed(serverState.servers.value) { index, it ->
+            if (savedServerIp.value != it.ip) {
+                ServerItem(pair = it, serverState) { item, uiState ->
+                    serverState.connect(item, uiState)
+                }
+            }
+        }
+    })
+}
+
+@Composable
+fun ServerItem(
+    pair: ServerAddress,
+    serverState: ServerFoundState,
+    connect: (ip: ServerAddress, buttonState: MutableState<UIState>) -> Unit
+) {
+    val buttonState = remember {
+        mutableStateOf(
+            if (serverState.connectionStatus.value)
+                UIState.SUCCESS
+            else
+                UIState.IDLE
+        )
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text =
+            if (pair.isSaved) {
+                "Saved ${pair.ip}"
+            } else {
+                "Found ${pair.ip}"
+            }
+        )
+        Button(
+            enabled = buttonState.value !in arrayOf(UIState.LOADING),
+            onClick = {
+                connect(pair, buttonState)
+            }) {
+            Text(
+                text = if (buttonState.value == UIState.SUCCESS) {
+                    "Disconnect"
+                } else {
+                    "Connect"
+                }
+            )
+        }
+    }
+}
+
 @Preview
 @Composable
 fun HeaderPreview() {
-    Header(state = NoServerState(scan = { }))
+    ScanServer(state = NoServerState(scan = { }))
 }
