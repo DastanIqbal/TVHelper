@@ -11,13 +11,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
+import androidx.compose.material3.Divider
+import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,23 +28,23 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.lifecycleScope
+import com.dastanapps.poweroff.server.RemoteServer
+import com.dastanapps.poweroff.service.SharedChannel
 import com.dastanapps.poweroff.service.TVHelperService
+import com.dastanapps.poweroff.ui.main.HelperScreen
+import com.dastanapps.poweroff.ui.main.models.HelperState
+import com.dastanapps.poweroff.ui.main.models.ServerState
 import com.dastanapps.poweroff.ui.theme.AndroidTVAppsTheme
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
 
 /**
  *
  * Created by Iqbal Ahmed on 19/02/2023 3:56 PM
  *
  */
-data class HelperState(
-    val runningState: MutableState<Boolean> = mutableStateOf(false),
-    val openService: () -> Unit
-)
-
-data class ServerState(
-    val runningState: MutableState<Boolean> = mutableStateOf(false),
-    val startServer: () -> Unit
-)
 
 class MainActivity : ComponentActivity() {
 
@@ -57,7 +60,7 @@ class MainActivity : ComponentActivity() {
     private val serverState by lazy {
         ServerState(
             startServer = {
-                startService(Intent(this, TVHelperService::class.java))
+                TVHelperService.INSTANCE?.startServer(it)
             }
         )
     }
@@ -74,132 +77,16 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
 
-    override fun onResume() {
-        super.onResume()
-        state.runningState.value = TVHelperService.IS_SERVICE_RUNNING
-    }
-}
-
-@Composable
-fun HelperScreen(
-    state: HelperState,
-    serverState: ServerState
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-
-        AccessibilityScreen(state = state)
-//        Divider(
-//            thickness = 1.dp
-//        )
-//        ServerScreen(state = serverState)
-    }
-}
-
-@Composable
-fun AccessibilityScreen(state: HelperState) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = "Enable Accessibility Service to access \nTV Helper in Installed Services",
-            textAlign = TextAlign.Center
-        )
-        if (state.runningState.value) {
-            Text(
-                text = "Running",
-                color = Color.Green,
-                modifier = Modifier.padding(top = 24.dp)
-            )
-            Text(
-                text = "To Stop, Turn off TV Helper in Installed Services",
-                fontSize = 12.sp,
-                color = Color.LightGray,
-                modifier = Modifier.padding(top = 16.dp)
-            )
-        } else {
-            Text(
-                text = "Not Running",
-                color = Color.Red,
-                modifier = Modifier.padding(top = 24.dp)
-            )
+        MainApp.mainScope.launch {
+            SharedChannel.serverRunningState.receiveAsFlow().collect {
+                this@MainActivity.serverState.runningState.value = it
+            }
         }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Button(
-                modifier = Modifier.padding(top = 24.dp),
-                onClick = {
-                    state.openService()
-                }
-            ) {
-                Text(text = "Open Accessibility")
+        MainApp.mainScope.launch {
+            SharedChannel.serviceRunningState.receiveAsFlow().collect {
+                this@MainActivity.state.runningState.value = it
             }
         }
     }
-}
-
-@Composable
-fun ServerScreen(state: ServerState) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-
-        Text(
-            text = "To control device, Please use this IP Address",
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Center
-        )
-        if (state.runningState.value) {
-            Text(
-                text = "Running",
-                color = Color.Green,
-                modifier = Modifier.padding(top = 24.dp)
-            )
-        } else {
-            Text(
-                text = "Not Running",
-                color = Color.Red,
-                modifier = Modifier.padding(top = 24.dp)
-            )
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Button(
-                modifier = Modifier.padding(top = 24.dp),
-                onClick = {
-                    state.startServer()
-                }
-            ) {
-                Text(text = "Start")
-            }
-        }
-    }
-}
-
-@Preview
-@Composable
-fun HelperScreenPreview() {
-    HelperScreen(
-        HelperState(openService = {}),
-        ServerState(startServer = {})
-    )
 }

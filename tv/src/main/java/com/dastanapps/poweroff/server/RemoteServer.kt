@@ -1,9 +1,12 @@
 package com.dastanapps.poweroff.server
 
+import com.dastanapps.poweroff.MainApp
 import com.dastanapps.poweroff.MainApp.Companion.log
 import com.dastanapps.poweroff.common.RemoteEvent
+import com.dastanapps.poweroff.service.SharedChannel
 import com.dastanapps.poweroff.utils.NetworkUtils.getSystemIP
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
@@ -33,12 +36,18 @@ class RemoteServer {
 
     fun start() {
         IS_SERVER_RUNNING = true
+        MainApp.mainScope.launch {
+            SharedChannel.serverRunningState.send(true)
+        }
         server()
         thread?.start()
     }
 
     fun stop() {
         IS_SERVER_RUNNING = false
+        MainApp.mainScope.launch {
+            SharedChannel.serverRunningState.send(false)
+        }
         thread?.interrupt()
     }
 

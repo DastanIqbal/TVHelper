@@ -2,6 +2,11 @@ package com.dastanapps.poweroff
 
 import android.app.Application
 import com.dastanapps.poweroff.common.log.Logger
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.SupervisorJob
 
 /**
  *
@@ -17,5 +22,7 @@ class MainApp : Application() {
 
     companion object {
         fun log(msg: String) = Logger.logDebug("TV Remote", msg)
+        val ioScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+        val mainScope = MainScope()
     }
 }
