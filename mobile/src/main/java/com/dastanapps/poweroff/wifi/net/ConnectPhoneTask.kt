@@ -2,6 +2,8 @@ package com.dastanapps.poweroff.wifi.net
 
 import android.annotation.SuppressLint
 import android.os.AsyncTask
+import com.dastanapps.poweroff.wifi.MainApp
+import kotlinx.coroutines.launch
 
 /**
  *
@@ -24,6 +26,8 @@ class ConnectPhoneTask(
     }
 
     override fun onPostExecute(isInit: Boolean) {
-        dataStream.prepare(isInit)
+        MainApp.applicationIoScope.launch {
+            dataStream.prepare(isInit)
+        }
     }
 }

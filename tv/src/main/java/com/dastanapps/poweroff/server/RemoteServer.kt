@@ -124,13 +124,14 @@ class RemoteServer {
         socketChannel.register(key.selector(), SelectionKey.OP_READ)
     }
 
+    @Synchronized
     private fun readData(key: SelectionKey) {
         var restart = true
         try {
             val socketChannel = key.channel() as SocketChannel
             val buffer = ByteBuffer.allocate(1024)
             val bytesRead = socketChannel.read(buffer)
-            val data = buffer.array().sliceArray(0 until bytesRead)
+            val _data = buffer.array().sliceArray(0 until bytesRead)
             if (bytesRead == -1) {
                 log("Connection closed by ${socketChannel.remoteAddress}")
 
@@ -143,25 +144,36 @@ class RemoteServer {
                 return
             }
 
-            val json = JSONObject(String(data))
+            val data = String(_data)
 
-            if (json.get("type") == RemoteEvent.STOP_SERVER.name) {
-                restart = false
-                log("Connection closed by ${socketChannel.remoteAddress} Client")
-                socketChannel.close()
-                key.cancel()
-                return
+            log("===== Received data ===> : $data")
+
+            if (data.replace("\n", "") == RemoteEvent.PING.name) {
+//                sendPong(socketChannel)
+            } else {
+                val json = JSONObject(data)
+
+                if (json.getString("type") == RemoteEvent.STOP_SERVER.name) {
+                    restart = false
+                    log("Connection closed by ${socketChannel.remoteAddress} Client")
+                    socketChannel.close()
+                    key.cancel()
+                    return
+                }
+
+                process(json)
             }
-
-            log("Received data: ${String(data)}")
-
-            process(json)
         } catch (e: Exception) {
             e.printStackTrace()
             tryCatchIgnore { FirebaseCrashlytics.getInstance().recordException(e) }
             if (restart)
                 start()
         }
+    }
+
+    private fun sendPong(socketChannel: SocketChannel) {
+        val writeBuffer = ByteBuffer.wrap(RemoteEvent.PONG.name.toByteArray())
+        socketChannel.write(writeBuffer)
     }
 
     private fun process(json: JSONObject) {

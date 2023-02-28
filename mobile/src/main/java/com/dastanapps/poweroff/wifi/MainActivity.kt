@@ -9,13 +9,18 @@ import android.view.Menu
 import android.view.MenuItem
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.dastanapps.poweroff.R
 import com.dastanapps.poweroff.common.utils.isConnectedToWifi
+import com.dastanapps.poweroff.common.utils.toast
 import com.dastanapps.poweroff.databinding.ActivityMainBinding
 import com.dastanapps.poweroff.ui.nointernet.NoWifiActivity
 import com.dastanapps.poweroff.ui.noserver.NoServerScreen
 import com.dastanapps.poweroff.wifi.contracts.impl.DpadListenerImpl
 import com.dastanapps.poweroff.wifi.contracts.impl.OnTouchListenerImpl
+import com.dastanapps.poweroff.wifi.data.SAVED_IP
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 /**
  *
@@ -36,12 +41,7 @@ class MainActivity : AppCompatActivity() {
                     finish()
                 }
             } else if (it.resultCode == Activity.RESULT_OK) {
-                if (dataStream.isConnected) {
-                    binding.mousePad.setOnTouchListener(
-                        OnTouchListenerImpl(dataStream)
-                    )
-                    binding.dpadView.setOnDPadListener(DpadListenerImpl(dataStream))
-                }
+                setUI()
             }
         }
 
@@ -73,6 +73,50 @@ class MainActivity : AppCompatActivity() {
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        verifyConnection()
+    }
+
+    private fun verifyConnection() {
+        if (isConnectedToWifi(this) && dataStream.isConnected) {
+            lifecycleScope.launch {
+                MainApp.INSTANCE.dataStoreManager.readString(SAVED_IP).collectLatest { ip ->
+                    if (ip.isNotEmpty()) {
+                        MainApp.INSTANCE.connectionManager.dataStream.ping {
+                            if (it) {
+                                MainApp.applicationScope.launch {
+                                    setUI()
+                                    this@MainActivity.toast("Connected to $ip")
+                                }
+                            } else {
+                                MainApp.INSTANCE.connectionManager.connect(ip) {
+                                    MainApp.applicationScope.launch {
+                                        if (it) {
+                                            setUI()
+                                            this@MainActivity.toast("Connected to $ip")
+                                        } else {
+                                            this@MainActivity.toast("Connection Error")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun setUI() {
+        if (dataStream.isConnected) {
+            binding.mousePad.setOnTouchListener(
+                OnTouchListenerImpl(dataStream)
+            )
+            binding.dpadView.setOnDPadListener(DpadListenerImpl(dataStream))
+        }
     }
 
     override fun onDestroy() {

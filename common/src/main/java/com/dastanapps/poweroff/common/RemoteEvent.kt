@@ -12,6 +12,8 @@ enum class RemoteEvent {
 
     //Server
     STOP_SERVER,
+    PING,
+    PONG,
 
     // DPAD
     DPAD_LEFT,

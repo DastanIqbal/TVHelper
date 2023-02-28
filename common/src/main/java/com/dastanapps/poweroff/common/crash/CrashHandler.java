@@ -3,7 +3,7 @@ package com.dastanapps.poweroff.common.crash;
 import android.content.Context;
 import android.os.Looper;
 import android.os.SystemClock;
-import android.widget.Toast;
+import android.util.Log;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -83,8 +83,7 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
                     @Override
                     public void run() {
                         Looper.prepare();
-                        Toast.makeText(mContext, "很抱歉,程序出现异常,即将重启.",
-                                Toast.LENGTH_LONG).show();
+                        Log.e(TAG, "Restarting Log");
                         Looper.loop();
                     }
                 }.start();

@@ -1,12 +1,14 @@
 package com.dastanapps.poweroff.wifi.net
 
 import android.util.Log
+import com.dastanapps.poweroff.common.RemoteEvent
 import com.dastanapps.poweroff.common.utils.tryCatch
 import com.dastanapps.poweroff.common.utils.tryCatchIgnore
 import com.dastanapps.poweroff.wifi.Constants
 import com.dastanapps.poweroff.wifi.MainApp
 import kotlinx.coroutines.launch
 import org.json.JSONObject
+import java.io.BufferedReader
 import java.io.BufferedWriter
 import java.io.OutputStreamWriter
 import java.io.PrintWriter
@@ -25,6 +27,8 @@ class ConnectionDataStream(
 
     var socket: Socket? = null
     private var out: PrintWriter? = null
+    private var reader: BufferedReader? = null
+    private var messageReceived = ""
 
     var isConnected = false
 
@@ -52,6 +56,12 @@ class ConnectionDataStream(
                         )
                     ), true
                 )
+//                reader = BufferedReader(
+//                    InputStreamReader(
+//                        socket?.getInputStream()
+//                    )
+//                )
+//                messageReceived = reader?.readLine() ?: ""
                 status.invoke(true)
             } else {
                 status.invoke(false)
@@ -70,6 +80,10 @@ class ConnectionDataStream(
         if (isStreamConnected) {
             tryCatchIgnore {
                 socket?.close() //close socket
+                if (socket?.isClosed == true) {
+                    isConnected = false
+                    out = null
+                }
             }
         }
     }
@@ -88,5 +102,25 @@ class ConnectionDataStream(
                 put("type", type)
             }.toString()
         )
+    }
+
+    fun ping(status: (isSuccess: Boolean) -> Unit) {
+        MainApp.applicationIoScope.launch {
+            if (isStreamConnected) {
+                tryCatch({
+                    out?.println(RemoteEvent.PING)
+//                    if (messageReceived.replace("\n", "") == RemoteEvent.PONG.name) {
+//                        status.invoke(true)
+//                    } else {
+//                        status.invoke(false)
+//                    }
+                    status.invoke(true)
+                }) {
+                    status.invoke(false)
+                }
+            } else {
+                status.invoke(false)
+            }
+        }
     }
 }
