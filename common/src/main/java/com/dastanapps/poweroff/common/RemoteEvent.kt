@@ -20,5 +20,8 @@ enum class RemoteEvent {
     DPAD_RIGHT,
     DPAD_TOP,
     DPAD_BOTTOM,
-    DPAD_CENTER
+    DPAD_CENTER,
+
+    // Device
+    WAKE_UP,
 }

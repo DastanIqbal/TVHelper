@@ -3,18 +3,39 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".wifi.MainActivity">
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/quick_actions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/poweron"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:adjustViewBounds="true"
+            android:background="@drawable/quickaction_tap"
+            android:padding="8dp"
+            android:scaleType="center"
+            app:srcCompat="@drawable/ic_quickaction_power_24" />
+    </androidx.appcompat.widget.LinearLayoutCompat>
 
     <View
         android:id="@+id/mousePad"
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:layout_marginTop="8dp"
         android:background="@android:color/holo_blue_dark"
         android:clickable="true"
         app:layout_constraintBottom_toTopOf="@+id/dpadView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/quick_actions" />
 
     <com.dastanapps.poweroff.wifi.dpad.DPadView
         android:id="@+id/dpadView"

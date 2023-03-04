@@ -6,6 +6,7 @@ import com.dastanapps.poweroff.common.RemoteEvent
 import com.dastanapps.poweroff.common.utils.deviceIP
 import com.dastanapps.poweroff.common.utils.toast
 import com.dastanapps.poweroff.common.utils.tryCatchIgnore
+import com.dastanapps.poweroff.common.utils.wakeDevice
 import com.dastanapps.poweroff.service.SharedChannel
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import kotlinx.coroutines.launch
@@ -197,6 +198,12 @@ class RemoteServer {
 
             RemoteEvent.SCROLL_DOWN.name -> {
                 scroll?.invoke(type)
+            }
+
+            RemoteEvent.WAKE_UP.name -> {
+                MainApp.INSTANCE?.applicationContext?.let {
+                    wakeDevice(context = it)
+                }
             }
         }
     }

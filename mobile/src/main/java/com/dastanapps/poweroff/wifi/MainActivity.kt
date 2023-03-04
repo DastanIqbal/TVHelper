@@ -11,6 +11,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.dastanapps.poweroff.R
+import com.dastanapps.poweroff.common.RemoteEvent
 import com.dastanapps.poweroff.common.utils.isConnectedToWifi
 import com.dastanapps.poweroff.common.utils.toast
 import com.dastanapps.poweroff.databinding.ActivityMainBinding
@@ -116,6 +117,10 @@ class MainActivity : AppCompatActivity() {
                 OnTouchListenerImpl(dataStream)
             )
             binding.dpadView.setOnDPadListener(DpadListenerImpl(dataStream))
+
+            binding.poweron.setOnClickListener {
+                dataStream.sendType(RemoteEvent.WAKE_UP.name)
+            }
         }
     }
 
