@@ -1,15 +1,74 @@
 package com.dastanapps.poweroff.service
 
 import android.accessibilityservice.AccessibilityService
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
 import android.graphics.Point
 import android.graphics.Rect
+import android.os.Bundle
+import android.provider.Settings
+import android.text.TextUtils
 import android.view.accessibility.AccessibilityNodeInfo
+import com.dastanapps.poweroff.MainApp.Companion.log
 
 
-//// below code is for supporting legacy devices as per my understanding of evia face cam source
-//// this is only used for long clicks here and isn't exactly something reliable
-//// leaving it in for reference just in case needed in future, because looking up face cam
-//// app's source might be a daunting task
+fun Context.openAccessibilitySettings(packageName: String = "com.dastanapps.poweroff.tv") {
+    val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+
+    val bundle = Bundle()
+    val componentName = ComponentName(
+        packageName,
+        TVHelperService::class.java.name
+    ).flattenToString()
+    bundle.putString(":settings:fragment_args_key", componentName)
+
+    intent.putExtra(":settings:fragment_args_key", componentName)
+    intent.putExtra(":settings:show_fragment_args", bundle)
+
+    try {
+        startActivity(intent)
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+}
+
+/**
+ *
+ * @param serviceName for eg : "application.Id/package.path.Service"
+ */
+fun isAccessibilitySettingsOn(context: Context, serviceName: String): Boolean {
+    var accessibilityEnable = 0
+
+    val serviceName = serviceName
+    try {
+        accessibilityEnable = Settings.Secure.getInt(
+            context.contentResolver,
+            Settings.Secure.ACCESSIBILITY_ENABLED
+        )
+    } catch (e: Exception) {
+        log("get accessibility enable failed, the err:" + e.message)
+    }
+    if (1 == accessibilityEnable) {
+        val mStringColonSplitter = TextUtils.SimpleStringSplitter(':')
+        val settingValue: String = Settings.Secure.getString(
+            context.contentResolver,
+            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+        )
+        mStringColonSplitter.setString(settingValue)
+        while (mStringColonSplitter.hasNext()) {
+            val accessibilityService = mStringColonSplitter.next()
+            if (accessibilityService.equals(serviceName, ignoreCase = true)) {
+                log("accessibility service: $serviceName  is on.")
+                return true
+            }
+        }
+    } else {
+        log("accessibility service disable.")
+    }
+    return false
+}
+
 fun findNode(
     service: AccessibilityService,
     node: AccessibilityNodeInfo?,

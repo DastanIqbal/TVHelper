@@ -1,8 +1,6 @@
 package com.dastanapps.poweroff
 
-import android.content.Intent
 import android.os.Bundle
-import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,6 +9,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.dastanapps.poweroff.service.SharedChannel
 import com.dastanapps.poweroff.service.TVHelperService
+import com.dastanapps.poweroff.service.isAccessibilitySettingsOn
+import com.dastanapps.poweroff.service.openAccessibilitySettings
 import com.dastanapps.poweroff.ui.main.HelperScreen
 import com.dastanapps.poweroff.ui.main.models.HelperState
 import com.dastanapps.poweroff.ui.main.models.ServerState
@@ -29,8 +29,7 @@ class MainActivity : ComponentActivity() {
     private val state by lazy {
         HelperState(
             openService = {
-                val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-                startActivity(intent)
+                this.openAccessibilitySettings()
             }
         )
     }
@@ -56,14 +55,24 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        val isOn = isAccessibilitySettingsOn(
+            this,
+            "com.dastanapps.poweroff.tv/com.dastanapps.poweroff.service.TVHelperService"
+        )
+
+        if (isOn) {
+            this@MainActivity.state.runningState.value = true
+        } else {
+            MainApp.mainScope.launch {
+                SharedChannel.serviceRunningState.receiveAsFlow().collect {
+                    this@MainActivity.state.runningState.value = it
+                }
+            }
+        }
+
         MainApp.mainScope.launch {
             SharedChannel.serverRunningState.receiveAsFlow().collect {
                 this@MainActivity.serverState.runningState.value = it
-            }
-        }
-        MainApp.mainScope.launch {
-            SharedChannel.serviceRunningState.receiveAsFlow().collect {
-                this@MainActivity.state.runningState.value = it
             }
         }
     }

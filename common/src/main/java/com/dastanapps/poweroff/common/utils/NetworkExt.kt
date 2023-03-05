@@ -151,7 +151,7 @@ fun findNetworkInfo(context: Context): NetworkInfo {
 
 fun deviceIP(): String {
     return try {
-        var sysIP: String?
+        var sysIP: String? = null
         val osName = System.getProperty("os.name")
         when (osName) {
             "Windows" -> {
@@ -163,16 +163,14 @@ fun deviceIP(): String {
             }
 
             else -> {
-                sysIP = getSystemIP4("eth0")
-                if (sysIP == null) {
-                    sysIP = getSystemIP4("eth1")
-                    if (sysIP == null) {
-                        sysIP = getSystemIP4("eth2")
-                        if (sysIP == null) {
-                            sysIP = getSystemIP4("usb0")
-                        }
-                    }
-                }
+                val interfaceNames = arrayListOf("wlan0","eth0", "eth1", "eth2", "usb0")
+                 run breaking@ {
+                     interfaceNames.forEach {
+                         sysIP = getSystemIP4(it)
+                         if (sysIP != null)
+                             return@breaking
+                     }
+                 }
             }
         }
         sysIP ?: ""
