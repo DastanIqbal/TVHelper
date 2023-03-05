@@ -104,11 +104,35 @@ class ConnectionDataStream(
         )
     }
 
-    fun sendText(text: String) {
+    fun sendText(text: String, x: Float, y: Float) {
         sendCommands(
             JSONObject().apply {
                 put("type", RemoteEvent.KEYBOARD)
                 put("text", text)
+                put("x", x)
+                put("y", y)
+            }.toString()
+        )
+    }
+
+    fun cursorPosition(x: Float, y: Float) {
+        sendCommands(
+            JSONObject().apply {
+                put("type", RemoteEvent.MOUSE.name)
+                put("x", x)
+                put("y", y)
+
+            }.toString()
+        )
+    }
+
+    fun singleTap(x: Float, y: Float) {
+        sendCommands(
+            JSONObject().apply {
+                put("type", RemoteEvent.SINGLE_TAP.name)
+                put("x", x)
+                put("y", y)
+
             }.toString()
         )
     }

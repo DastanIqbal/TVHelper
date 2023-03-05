@@ -128,3 +128,27 @@ fun findScrollableNode(
     }
     return null
 }
+
+fun findEditable(nodeInfo: AccessibilityNodeInfo?): AccessibilityNodeInfo? {
+    val focusInput = nodeInfo?.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
+    var currentFocusInput: AccessibilityNodeInfo? = null
+
+    if (focusInput?.isEditable == true) {
+        currentFocusInput = focusInput
+
+        log("Find Focus ${focusInput.className} ${focusInput.text}")
+
+    } else if (currentFocusInput == null && nodeInfo != null && nodeInfo.childCount > 0) {
+        loop@ for (index in 0 until nodeInfo.childCount) {
+            val item = nodeInfo.getChild(index)
+            if (item.isEditable) {
+                currentFocusInput = item
+
+                log("Node：${item.className} ${item.text}")
+                break@loop
+            }
+        }
+    }
+
+    return currentFocusInput
+}

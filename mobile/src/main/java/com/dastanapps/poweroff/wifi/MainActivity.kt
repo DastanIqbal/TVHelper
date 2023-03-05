@@ -4,12 +4,12 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
 import com.dastanapps.poweroff.R
 import com.dastanapps.poweroff.common.RemoteEvent
@@ -21,6 +21,7 @@ import com.dastanapps.poweroff.ui.nointernet.NoWifiActivity
 import com.dastanapps.poweroff.ui.noserver.NoServerScreen
 import com.dastanapps.poweroff.wifi.contracts.impl.DpadListenerImpl
 import com.dastanapps.poweroff.wifi.contracts.impl.OnTouchListenerImpl
+import com.dastanapps.poweroff.wifi.contracts.impl.onTextChanged
 import com.dastanapps.poweroff.wifi.data.SAVED_IP
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -48,16 +49,17 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+    private lateinit var touchListenerImpl: OnTouchListenerImpl
+
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(LayoutInflater.from(this))
         setContentView(binding.root)
-        setUI()
 
         if (isConnectedToWifi(this)) {
             if (!dataStream.isConnected) {
-//                activityLauncher.launch(Intent(this, NoServerScreen::class.java))
+                activityLauncher.launch(Intent(this, NoServerScreen::class.java))
             }
         } else {
             startActivity(Intent(this, NoWifiActivity::class.java))
@@ -114,15 +116,27 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private var textWatcher: TextWatcher? = null
+
     private fun setUI() {
-        if (!dataStream.isConnected) {
-            binding.dummyEdittext.doAfterTextChanged {
-                it?.run { dataStream.sendText(it.toString()) }
+        if (dataStream.isConnected) {
+            touchListenerImpl = OnTouchListenerImpl(dataStream)
+
+            binding.dummyEdittext.removeTextChangedListener(textWatcher)
+            textWatcher = binding.dummyEdittext.onTextChanged { text ->
+                text?.let {
+                    if(it.isNotEmpty()) {
+                        dataStream.sendText(
+                            it.toString(),
+                            touchListenerImpl.disX,
+                            touchListenerImpl.disY
+                        )
+                        binding.dummyEdittext.setText("")
+                    }
+                }
             }
 
-            binding.mousePad.setOnTouchListener(
-                OnTouchListenerImpl(dataStream)
-            )
+            binding.mousePad.setOnTouchListener(touchListenerImpl)
             binding.dpadView.setOnDPadListener(DpadListenerImpl(dataStream))
 
             binding.poweron.setOnClickListener {

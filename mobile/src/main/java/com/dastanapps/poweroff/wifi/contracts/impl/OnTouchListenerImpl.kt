@@ -6,7 +6,6 @@ import android.view.MotionEvent
 import android.view.View
 import com.dastanapps.poweroff.common.RemoteEvent
 import com.dastanapps.poweroff.wifi.net.ConnectionDataStream
-import org.json.JSONObject
 import kotlin.math.sqrt
 
 /**
@@ -25,10 +24,11 @@ class OnTouchListenerImpl(
     private var rawLastX = 0f
     private var rawLastY = 0f
 
-    private var disX = 0f
-    private var disY = 0f
-
     private var startTime = 0L
+
+    var disX = 0f
+    var disY = 0f
+
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouch(v: View, event: MotionEvent): Boolean {
@@ -70,14 +70,7 @@ class OnTouchListenerImpl(
                         lastY = event.y
 
                         if (disX != 0f || disY != 0f) {
-                            dataStream.sendCommands(
-                                JSONObject().apply {
-                                    put("type", RemoteEvent.MOUSE.name)
-                                    put("x", disX)
-                                    put("y", disY)
-
-                                }.toString()
-                            )
+                            dataStream.cursorPosition(disX, disY)
                         }
 
                         // Detect Tap
@@ -94,14 +87,7 @@ class OnTouchListenerImpl(
                 MotionEvent.ACTION_UP -> {
                     val duration = System.currentTimeMillis() - startTime
                     if (duration < 200) {
-                        dataStream.sendCommands(
-                            JSONObject().apply {
-                                put("type", RemoteEvent.SINGLE_TAP.name)
-                                put("x", disX)
-                                put("y", disY)
-
-                            }.toString()
-                        )
+                        dataStream.singleTap(disX, disY)
                     }
                     startTime = 0
                     true

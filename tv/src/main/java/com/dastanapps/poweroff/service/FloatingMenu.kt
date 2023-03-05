@@ -18,6 +18,7 @@ import android.widget.ImageView
 import com.dastanapps.poweroff.MainApp.Companion.log
 import com.dastanapps.poweroff.R
 import com.dastanapps.poweroff.common.RemoteEvent
+import com.dastanapps.poweroff.common.utils.copyText
 
 
 /**
@@ -194,6 +195,20 @@ class FloatingMenu(
                     AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_BACKWARD
                 )
                 scrollable?.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_BACKWARD.id)
+            }
+        }
+    }
+
+    fun typing(text: String, x: Float, y: Float) {
+        cursorIcon?.let { imv ->
+            val editableNode = findEditable(service.rootInActiveWindow)
+
+            editableNode?.run {
+                if (isEditable) {
+                    text.copyText(imv.context)
+                    performAction(AccessibilityNodeInfo.ACTION_FOCUS)
+                    performAction(AccessibilityNodeInfo.ACTION_PASTE)
+                }
             }
         }
     }

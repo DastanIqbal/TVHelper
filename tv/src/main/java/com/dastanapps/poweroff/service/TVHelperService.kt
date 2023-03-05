@@ -61,6 +61,10 @@ class TVHelperService : AccessibilityService() {
             floatingMenu.scroll(type)
         }
 
+        remoteServer.typing = { text, x, y ->
+            floatingMenu.typing(text, x.toFloat(), y.toFloat())
+        }
+
         remoteServer.start()
 
         floatingMenu.handler.post {

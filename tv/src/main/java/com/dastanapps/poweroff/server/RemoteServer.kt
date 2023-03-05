@@ -36,6 +36,7 @@ class RemoteServer {
     var mouseCursor: ((x: Double, y: Double) -> Unit)? = null
     var tapOn: ((x: Double, y: Double) -> Unit)? = null
     var scroll: ((type: String) -> Unit)? = null
+    var typing: ((text: String, x: Double, y: Double) -> Unit)? = null
 
     fun start() {
         IS_SERVER_RUNNING = true
@@ -204,6 +205,13 @@ class RemoteServer {
                 MainApp.INSTANCE?.applicationContext?.let {
                     wakeDevice(context = it)
                 }
+            }
+
+            RemoteEvent.KEYBOARD.name -> {
+                val text = json.getString("text")
+                val x = json.getDouble("x")
+                val y = json.getDouble("y")
+                typing?.invoke(text, x, y)
             }
         }
     }
