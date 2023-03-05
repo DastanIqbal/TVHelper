@@ -9,10 +9,12 @@ import android.view.Menu
 import android.view.MenuItem
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
 import com.dastanapps.poweroff.R
 import com.dastanapps.poweroff.common.RemoteEvent
 import com.dastanapps.poweroff.common.utils.isConnectedToWifi
+import com.dastanapps.poweroff.common.utils.showKeyboard
 import com.dastanapps.poweroff.common.utils.toast
 import com.dastanapps.poweroff.databinding.ActivityMainBinding
 import com.dastanapps.poweroff.ui.nointernet.NoWifiActivity
@@ -51,10 +53,11 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(LayoutInflater.from(this))
         setContentView(binding.root)
+        setUI()
 
         if (isConnectedToWifi(this)) {
             if (!dataStream.isConnected) {
-                activityLauncher.launch(Intent(this, NoServerScreen::class.java))
+//                activityLauncher.launch(Intent(this, NoServerScreen::class.java))
             }
         } else {
             startActivity(Intent(this, NoWifiActivity::class.java))
@@ -112,7 +115,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setUI() {
-        if (dataStream.isConnected) {
+        if (!dataStream.isConnected) {
+            binding.dummyEdittext.doAfterTextChanged {
+                it?.run { dataStream.sendText(it.toString()) }
+            }
+
             binding.mousePad.setOnTouchListener(
                 OnTouchListenerImpl(dataStream)
             )
@@ -120,6 +127,11 @@ class MainActivity : AppCompatActivity() {
 
             binding.poweron.setOnClickListener {
                 dataStream.sendType(RemoteEvent.WAKE_UP.name)
+            }
+
+            binding.keyboard.setOnClickListener {
+                binding.dummyEdittext.requestFocus()
+                binding.dummyEdittext.showKeyboard()
             }
         }
     }

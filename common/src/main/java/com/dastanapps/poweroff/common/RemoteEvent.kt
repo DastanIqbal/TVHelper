@@ -24,4 +24,5 @@ enum class RemoteEvent {
 
     // Device
     WAKE_UP,
+    KEYBOARD
 }

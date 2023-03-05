@@ -104,6 +104,15 @@ class ConnectionDataStream(
         )
     }
 
+    fun sendText(text: String) {
+        sendCommands(
+            JSONObject().apply {
+                put("type", RemoteEvent.KEYBOARD)
+                put("text", text)
+            }.toString()
+        )
+    }
+
     fun ping(status: (isSuccess: Boolean) -> Unit) {
         MainApp.applicationIoScope.launch {
             if (isStreamConnected) {

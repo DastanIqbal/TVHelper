@@ -23,6 +23,17 @@
             android:padding="8dp"
             android:scaleType="center"
             app:srcCompat="@drawable/ic_quickaction_power_24" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/keyboard"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:adjustViewBounds="true"
+            android:background="@drawable/quickaction_tap"
+            android:padding="8dp"
+            android:scaleType="center"
+            app:srcCompat="@drawable/ic_quickaction_keyboard_24" />
     </androidx.appcompat.widget.LinearLayoutCompat>
 
     <View
@@ -45,5 +56,14 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <!--    Dummy EditText used for Typing-->
+    <EditText
+        android:id="@+id/dummyEdittext"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:visibility="visible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
