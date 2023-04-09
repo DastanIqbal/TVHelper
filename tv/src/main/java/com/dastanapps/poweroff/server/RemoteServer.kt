@@ -3,20 +3,17 @@ package com.dastanapps.poweroff.server
 import com.dastanapps.poweroff.MainApp
 import com.dastanapps.poweroff.MainApp.Companion.log
 import com.dastanapps.poweroff.common.RemoteEvent
-import com.dastanapps.poweroff.common.utils.deviceIP
-import com.dastanapps.poweroff.common.utils.toast
-import com.dastanapps.poweroff.common.utils.tryCatchIgnore
 import com.dastanapps.poweroff.common.utils.wakeDevice
 import com.dastanapps.poweroff.service.SharedChannel
-import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.google.gson.Gson
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import kotlinx.coroutines.launch
-import org.json.JSONObject
-import java.net.InetSocketAddress
-import java.nio.ByteBuffer
-import java.nio.channels.SelectionKey
-import java.nio.channels.Selector
-import java.nio.channels.ServerSocketChannel
-import java.nio.channels.SocketChannel
+import java.io.BufferedReader
+import java.io.IOException
+import java.io.InputStreamReader
+import java.io.PrintWriter
+import java.net.ServerSocket
 
 /**
  *
@@ -24,14 +21,11 @@ import java.nio.channels.SocketChannel
  *
  */
 
-fun main(args: Array<String>) {
-    val remoteServer = RemoteServer()
-    remoteServer.start()
-}
-
 class RemoteServer {
 
     private var thread: Thread? = null
+    private val gson by lazy { Gson() }
+    var printOut: PrintWriter? = null
 
     var mouseCursor: ((x: Double, y: Double) -> Unit)? = null
     var tapOn: ((x: Double, y: Double) -> Unit)? = null
@@ -55,141 +49,50 @@ class RemoteServer {
         thread?.interrupt()
     }
 
-    var serverSocketChannel: ServerSocketChannel? = null
-    var selector: Selector? = null
     private fun server() {
-        val port = 8585 // Change this to your desired port number
-
-        if (serverSocketChannel == null || serverSocketChannel?.isOpen == false)
-            serverSocketChannel = ServerSocketChannel.open()
-
-        var serverSocket = serverSocketChannel!!
-        if (serverSocket.socket().isBound) {
-            serverSocket.socket().close()
-            serverSocketChannel = ServerSocketChannel.open()
-            serverSocket = serverSocketChannel!!
-        }
-
-        serverSocket.socket().bind(InetSocketAddress(port))
-        serverSocket.socket().reuseAddress = true
-        serverSocket.socket().soTimeout = 0
-        serverSocket.configureBlocking(false)
-
-        log("Server started on IPv4 ${deviceIP()} Port $port")
-
-        selector = if (selector == null || selector?.isOpen == false)
-            Selector.open()
-        else {
-            selector?.close()
-            Selector.open()
-        }
-        serverSocket.register(selector, SelectionKey.OP_ACCEPT)
-
-        val selector = selector!!
-        thread = Thread {
-            while (IS_SERVER_RUNNING && selector.select() > 0) {
-                val selectedKeys = selector.selectedKeys().iterator()
-
-                while (selectedKeys.hasNext()) {
-                    val key = selectedKeys.next()
-                    selectedKeys.remove()
-
-                    if (!key.isValid) {
-                        continue
-                    }
-
-                    if (key.isAcceptable) {
-                        acceptConnection(key)
-                    }
-
-                    if (key.isReadable) {
-                        readData(key)
-                    }
-                }
-            }
-            // Clean up resources before exiting
-            serverSocket?.close()
-            selector?.close()
-        }
-    }
-
-    private fun acceptConnection(key: SelectionKey) {
-        val serverSocket = key.channel() as ServerSocketChannel
-        val socketChannel = serverSocket.accept()
-        socketChannel.configureBlocking(false)
-
-        log("Accepted connection from ${socketChannel.remoteAddress}")
-        MainApp.mainScope.launch {
-            MainApp.INSTANCE?.toast("Client connected ${(socketChannel.remoteAddress as InetSocketAddress).address.hostAddress}")
-        }
-
-        socketChannel.register(key.selector(), SelectionKey.OP_READ)
-    }
-
-    @Synchronized
-    private fun readData(key: SelectionKey) {
-        var restart = true
         try {
-            val socketChannel = key.channel() as SocketChannel
-            val buffer = ByteBuffer.allocate(1024)
-            val bytesRead = socketChannel.read(buffer)
-            val _data = buffer.array().sliceArray(0 until bytesRead)
-            if (bytesRead == -1) {
-                log("Connection closed by ${socketChannel.remoteAddress}")
+            val serverSocket = ServerSocket(PORT)
+            log("JSON Server started on port $PORT")
 
-                MainApp.mainScope.launch {
-                    MainApp.INSTANCE?.toast("Client ${(socketChannel.remoteAddress as InetSocketAddress).address.hostAddress} disconnected")
-                }
+            while (IS_SERVER_RUNNING) {
+                val clientSocket = serverSocket.accept()
+                log("Client connected from " + clientSocket.inetAddress.hostAddress)
 
-                socketChannel.close()
-                key.cancel()
-                return
+                val bufIn = BufferedReader(InputStreamReader(clientSocket.getInputStream()))
+                printOut = PrintWriter(clientSocket.getOutputStream(), true)
+
+                val request = bufIn.readLine()
+                log("Request received: $request")
+
+                val jsonElement = JsonParser.parseString(request)
+                val jsonObject = jsonElement.asJsonObject
+
+                // Handle the JSON request here...
+                process(jsonObject)
+
+                // Clean up
+                bufIn.close()
+                printOut?.close()
+                clientSocket.close()
             }
-
-            val data = String(_data)
-
-            log("===== Received data ===> : $data")
-
-            if (data.replace("\n", "") == RemoteEvent.PING.name) {
-//                sendPong(socketChannel)
-            } else {
-                val json = JSONObject(data)
-
-                if (json.getString("type") == RemoteEvent.STOP_SERVER.name) {
-                    restart = false
-                    log("Connection closed by ${socketChannel.remoteAddress} Client")
-                    socketChannel.close()
-                    key.cancel()
-                    return
-                }
-
-                process(json)
-            }
-        } catch (e: Exception) {
+        } catch (e: IOException) {
             e.printStackTrace()
-            tryCatchIgnore { FirebaseCrashlytics.getInstance().recordException(e) }
-            if (restart)
-                start()
         }
+
     }
 
-    private fun sendPong(socketChannel: SocketChannel) {
-        val writeBuffer = ByteBuffer.wrap(RemoteEvent.PONG.name.toByteArray())
-        socketChannel.write(writeBuffer)
-    }
-
-    private fun process(json: JSONObject) {
-        val type = json.getString("type")
+    private fun process(json: JsonObject) {
+        val type = json.get("type").asString
         when (type) {
             RemoteEvent.MOUSE.name -> {
-                val x = json.getDouble("x")
-                val y = json.getDouble("y")
+                val x = json.get("x").asDouble
+                val y = json.get("y").asDouble
                 mouseCursor?.invoke(x, y)
             }
 
             RemoteEvent.SINGLE_TAP.name -> {
-                val x = json.getDouble("x")
-                val y = json.getDouble("y")
+                val x = json.get("x").asDouble
+                val y = json.get("y").asDouble
                 tapOn?.invoke(x, y)
             }
 
@@ -208,16 +111,28 @@ class RemoteServer {
             }
 
             RemoteEvent.KEYBOARD.name -> {
-                val text = json.getString("text")
-                val x = json.getDouble("x")
-                val y = json.getDouble("y")
+                val text = json.get("text").asString
+                val x = json.get("x").asDouble
+                val y = json.get("y").asDouble
                 typing?.invoke(text, x, y)
+            }
+
+            RemoteEvent.PING.name -> {
+                val responseJson = JsonObject()
+                responseJson.addProperty("type", RemoteEvent.PONG.name)
+                sendMessage(responseJson)
             }
         }
     }
 
+    fun sendMessage(responseJson: JsonObject) {
+        val response = gson.toJson(responseJson)
+        printOut?.println(response)
+    }
+
     companion object {
         var IS_SERVER_RUNNING = false
+        val PORT = 8585
     }
 
 }
