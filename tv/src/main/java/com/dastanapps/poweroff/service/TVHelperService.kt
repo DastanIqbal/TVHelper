@@ -88,6 +88,7 @@ class TVHelperService : AccessibilityService() {
 
     fun startServer(start: Boolean) {
         if (start) {
+            remoteServer.stop()
             remoteServer.start()
         } else {
             remoteServer.stop()

@@ -3,6 +3,7 @@ package com.dastanapps.poweroff.server
 import com.dastanapps.poweroff.common.RemoteEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import org.junit.Assert
@@ -56,6 +57,13 @@ class RemoteServerTest {
                 println("Received response: $response")
 
                 Assert.assertEquals("{\"type\":\"${RemoteEvent.PONG.name}\"}", response)
+
+                delay(1_000)
+
+                val scrollUp = "{\"type\":\"${RemoteEvent.SCROLL_UP.name}\"}"
+                out.println(scrollUp)
+                println("Sent request: $scrollUp")
+
                 // Clean up
                 `in`.close()
                 out.close()

@@ -26,6 +26,7 @@ class RemoteServer {
     private var thread: Thread? = null
     private val gson by lazy { Gson() }
     var printOut: PrintWriter? = null
+    var serverSocket: ServerSocket? = null
 
     var mouseCursor: ((x: Double, y: Double) -> Unit)? = null
     var tapOn: ((x: Double, y: Double) -> Unit)? = null
@@ -43,6 +44,7 @@ class RemoteServer {
 
     fun stop() {
         IS_SERVER_RUNNING = false
+        serverSocket?.close()
         MainApp.mainScope.launch {
             SharedChannel.serverRunningState.send(false)
         }
@@ -52,25 +54,28 @@ class RemoteServer {
     private fun server() {
         thread = Thread() {
             try {
-                val serverSocket = ServerSocket(PORT)
+                serverSocket = ServerSocket(PORT)
                 log("JSON Server started on port $PORT")
 
-                while (IS_SERVER_RUNNING) {
-                    val clientSocket = serverSocket.accept()
-                    log("Client connected from " + clientSocket.inetAddress.hostAddress)
+                while (IS_SERVER_RUNNING && serverSocket != null) {
+                    val clientSocket = serverSocket!!.accept()
+                    log("Client connected from " + clientSocket?.inetAddress?.hostAddress)
 
-                    val bufIn = BufferedReader(InputStreamReader(clientSocket.getInputStream()))
+                    val bufIn = BufferedReader(InputStreamReader(clientSocket!!.getInputStream()))
                     printOut = PrintWriter(clientSocket.getOutputStream(), true)
 
-                    val request = bufIn.readLine()
-                    log("Request received: $request")
+                    var request: String
+                    while (bufIn.readLine().also { request = it } != null) {
+                        log("Request received: $request")
 
-                    val jsonElement = JsonParser.parseString(request)
-                    val jsonObject = jsonElement.asJsonObject
+                        // Process the request
+                        val jsonElement = JsonParser.parseString(request)
+                        val jsonObject = jsonElement.asJsonObject
 
-                    // Handle the JSON request here...
-                    log("Request Json: $jsonObject")
-                    process(jsonObject)
+                        // Handle the JSON request
+                        log("Request Json: $jsonObject")
+                        process(jsonObject)
+                    }
 
                     // Clean up
                     bufIn.close()
@@ -133,6 +138,7 @@ class RemoteServer {
     fun sendMessage(responseJson: JsonObject) {
         val response = gson.toJson(responseJson)
         printOut?.println(response)
+        printOut?.println("\n\r")
     }
 
     companion object {
