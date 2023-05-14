@@ -3,6 +3,7 @@ package com.dastanapps.poweroff.server
 import com.dastanapps.poweroff.MainApp
 import com.dastanapps.poweroff.MainApp.Companion.log
 import com.dastanapps.poweroff.common.RemoteEvent
+import com.dastanapps.poweroff.common.utils.tryCatchIgnore
 import com.dastanapps.poweroff.common.utils.wakeDevice
 import com.dastanapps.poweroff.service.SharedChannel
 import com.google.gson.Gson
@@ -64,17 +65,20 @@ class RemoteServer {
                     val bufIn = BufferedReader(InputStreamReader(clientSocket!!.getInputStream()))
                     printOut = PrintWriter(clientSocket.getOutputStream(), true)
 
-                    var request: String
-                    while (bufIn.readLine().also { request = it } != null) {
-                        log("Request received: $request")
+                    tryCatchIgnore {
+                        var request: String? = null
+                        while (bufIn.readLine()?.also { request = it } != null) {
+                            log("Request received: $request")
 
-                        // Process the request
-                        val jsonElement = JsonParser.parseString(request)
-                        val jsonObject = jsonElement.asJsonObject
+                            // Process the request
+                            val jsonElement = JsonParser.parseString(request)
+                            val jsonObject = jsonElement.asJsonObject
 
-                        // Handle the JSON request
-                        log("Request Json: $jsonObject")
-                        process(jsonObject)
+                            // Handle the JSON request
+                            log("Request Json: $jsonObject")
+                            process(jsonObject)
+                            request = null
+                        }
                     }
 
                     // Clean up
