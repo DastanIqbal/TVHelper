@@ -18,3 +18,8 @@ data class ServerState(
     val runningState: MutableState<Boolean> = mutableStateOf(false),
     val startServer: (start: Boolean) -> Unit
 )
+
+data class CursorState(
+    val changeClickState: MutableState<Boolean> = mutableStateOf(false),
+    val cursorsList: MutableState<List<Int>> = mutableStateOf(emptyList())
+)

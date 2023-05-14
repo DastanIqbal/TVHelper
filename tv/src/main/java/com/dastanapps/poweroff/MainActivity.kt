@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.dastanapps.poweroff.service.SharedChannel
@@ -12,6 +13,7 @@ import com.dastanapps.poweroff.service.TVHelperService
 import com.dastanapps.poweroff.service.isAccessibilitySettingsOn
 import com.dastanapps.poweroff.service.openAccessibilitySettings
 import com.dastanapps.poweroff.ui.main.HelperScreen
+import com.dastanapps.poweroff.ui.main.models.CursorState
 import com.dastanapps.poweroff.ui.main.models.HelperState
 import com.dastanapps.poweroff.ui.main.models.ServerState
 import com.dastanapps.poweroff.ui.theme.AndroidTVAppsTheme
@@ -42,6 +44,17 @@ class MainActivity : ComponentActivity() {
         )
     }
 
+    private val cursorState by lazy {
+        CursorState(
+            cursorsList = mutableStateOf(arrayListOf<Int>().apply {
+                add(R.drawable.baseline_mouse_24)
+                add(R.drawable.baseline_mouse_24)
+                add(R.drawable.baseline_mouse_24)
+                add(R.drawable.baseline_mouse_24)
+            })
+        )
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -50,7 +63,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxWidth(),
                     color = Color.Transparent
                 ) {
-                    HelperScreen(state, serverState)
+                    HelperScreen(state, serverState, cursorState)
                 }
             }
         }

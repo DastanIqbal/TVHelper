@@ -50,39 +50,43 @@ class RemoteServer {
     }
 
     private fun server() {
-        try {
-            val serverSocket = ServerSocket(PORT)
-            log("JSON Server started on port $PORT")
+        thread = Thread() {
+            try {
+                val serverSocket = ServerSocket(PORT)
+                log("JSON Server started on port $PORT")
 
-            while (IS_SERVER_RUNNING) {
-                val clientSocket = serverSocket.accept()
-                log("Client connected from " + clientSocket.inetAddress.hostAddress)
+                while (IS_SERVER_RUNNING) {
+                    val clientSocket = serverSocket.accept()
+                    log("Client connected from " + clientSocket.inetAddress.hostAddress)
 
-                val bufIn = BufferedReader(InputStreamReader(clientSocket.getInputStream()))
-                printOut = PrintWriter(clientSocket.getOutputStream(), true)
+                    val bufIn = BufferedReader(InputStreamReader(clientSocket.getInputStream()))
+                    printOut = PrintWriter(clientSocket.getOutputStream(), true)
 
-                val request = bufIn.readLine()
-                log("Request received: $request")
+                    val request = bufIn.readLine()
+                    log("Request received: $request")
 
-                val jsonElement = JsonParser.parseString(request)
-                val jsonObject = jsonElement.asJsonObject
+                    val jsonElement = JsonParser.parseString(request)
+                    val jsonObject = jsonElement.asJsonObject
 
-                // Handle the JSON request here...
-                process(jsonObject)
+                    // Handle the JSON request here...
+                    log("Request Json: $jsonObject")
+                    process(jsonObject)
 
-                // Clean up
-                bufIn.close()
-                printOut?.close()
-                clientSocket.close()
+                    // Clean up
+                    bufIn.close()
+                    printOut?.close()
+                    clientSocket.close()
+                }
+            } catch (e: IOException) {
+                e.printStackTrace()
             }
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
 
+        }
     }
 
     private fun process(json: JsonObject) {
         val type = json.get("type").asString
+        log("Request Json Type: $type")
         when (type) {
             RemoteEvent.MOUSE.name -> {
                 val x = json.get("x").asDouble
@@ -120,6 +124,7 @@ class RemoteServer {
             RemoteEvent.PING.name -> {
                 val responseJson = JsonObject()
                 responseJson.addProperty("type", RemoteEvent.PONG.name)
+                log("Response Json Type: $responseJson")
                 sendMessage(responseJson)
             }
         }
