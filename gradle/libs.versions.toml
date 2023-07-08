@@ -1,0 +1,63 @@
+[versions]
+androidApplicaitonPlugin = "8.1.0-rc01"
+androidLibraryPlugin = "8.1.0-rc01"
+kotlinAndroidPlugin = "1.8.10"
+kotlinJvmPlugin = "1.8.0"
+googleServicesPlugin = "4.3.15"
+devToolsKspPlugin = "1.8.10-1.0.9"
+
+ktx = "1.10.1"
+compileSdk = "33"
+minSdk = "24"
+jvm = "17"
+
+appCompat = "1.6.1"
+material = "1.9.0"
+lifeCycleRuntime = "2.6.1"
+acitivtyCompose = "1.7.2"
+datastore = "1.0.0"
+epoxy = "5.1.1"
+composeBom = "2023.06.01"
+leanback = "1.0.0"
+gson = "2.10.1"
+firebaseBom = "31.2.2"
+
+[libraries]
+androidx-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "ktx" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appCompat" }
+androidx-lifecycle = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifeCycleRuntime" }
+androidx-datastore = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+androidx-activityCompose = { group = "androidx.activity", name = "activity-compose", version.ref = "acitivtyCompose" }
+androidx-leanback = { module = "androidx.leanback:leanback", version.ref = "leanback" }
+
+compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
+compose-ui = { module = "androidx.compose.ui:ui" }
+compose-uiGraphics = { module = "androidx.compose.ui:ui-graphics" }
+compose-uiToolingPreview = { module = "androidx.compose.ui:ui-tooling-preview" }
+compose-material3 = { module = "androidx.compose.material3:material3" }
+compose-materialIconsExtended = { module = "androidx.compose.material:material-icons-extended" }
+compose-uiTooling = { module = "androidx.compose.ui:ui-tooling" }
+compose-uiTestManifest = { module = "androidx.compose.ui:ui-test-manifest" }
+
+google-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+google-gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+
+google-firebaesBom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+google-firebaseCrashlytics = { module = "com.google.firebase:firebase-crashlytics" }
+google-firebaesAnalytics = { module = "com.google.firebase:firebase-analytics-ktx" }
+
+epoxy = { group = "com.airbnb.android", name = "epoxy", version.ref = "epoxy" }
+epoxyKapt = { group = "com.airbnb.android", name = "epoxy-processor", version.ref = "epoxy" }
+
+
+[bundles]
+compose = ["compose-ui", "compose-uiGraphics", "compose-uiToolingPreview", "compose-material3", "compose-materialIconsExtended"]
+
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "androidApplicaitonPlugin" }
+android-library = { id = "com.android.library", version.ref = "androidLibraryPlugin" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlinAndroidPlugin" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlinJvmPlugin" }
+google-googleServices = { id = "com.google.gms.google-services", version.ref = "googleServicesPlugin" }
+google-devtoolsKsp = { id = "com.google.devtools.ksp", version.ref = "devToolsKspPlugin" }

@@ -6,11 +6,11 @@ plugins {
 
 android {
     namespace 'com.dastanapps.poweroff'
-    compileSdk 33
+    compileSdk libs.versions.compileSdk.get().toInteger()
 
     defaultConfig {
-        minSdk 24
-        targetSdk 33
+        minSdk libs.versions.minSdk.get().toInteger()
+        targetSdk libs.versions.compileSdk.get().toInteger()
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -24,14 +24,15 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-    
+
+    def jvm = libs.versions.jvm.get()
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+        sourceCompatibility JavaVersion.toVersion(jvm)
+        targetCompatibility JavaVersion.toVersion(jvm)
     }
 
     kotlinOptions {
-        jvmTarget = '17'
+        jvmTarget = jvm.toString()
     }
 
     packagingOptions {
@@ -42,6 +43,5 @@ android {
 }
 
 dependencies {
-
-    implementation 'androidx.core:core-ktx:1.9.0'
+    implementation(libs.androidx.ktx)
 }
